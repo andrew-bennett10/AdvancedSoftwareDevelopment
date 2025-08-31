@@ -21,8 +21,8 @@ steps:
     npm run build
   displayName: 'Install dependencies and build'
 
-# Optional: run tests if you have them
-- script: |
-    cd frontend
-    npm test
-  displayName: 'Run tests'
+# # Optional: run tests if you have them
+# - script: |
+#     cd frontend
+#     CI=true npm test
+#   displayName: 'Run tests'

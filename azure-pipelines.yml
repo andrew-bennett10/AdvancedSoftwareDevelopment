@@ -12,10 +12,17 @@ pool:
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '20.x'
+    versionSpec: '20.x'   # use the Node.js version you need
   displayName: 'Install Node.js'
 
 - script: |
+    cd src             # go into folder where package.json lives
     npm install
     npm run build
-  displayName: 'npm install and build'
+  displayName: 'Install dependencies and build'
+
+# Optional: run tests if you have them
+- script: |
+    cd src
+    npm test
+  displayName: 'Run tests'

@@ -23,6 +23,6 @@ steps:
 
 # Optional: run tests if you have them
 - script: |
-    cd src
+    cd frontend
     npm test
   displayName: 'Run tests'

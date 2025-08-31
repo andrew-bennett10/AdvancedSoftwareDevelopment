@@ -16,7 +16,7 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    cd src             # go into folder where package.json lives
+    cd frontend
     npm install
     npm run build
   displayName: 'Install dependencies and build'

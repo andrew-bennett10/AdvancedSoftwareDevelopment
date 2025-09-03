@@ -12,6 +12,15 @@ async function initDB() {
     )
   `);
   console.log("Accounts table created");
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS binders (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(50) UNIQUE NOT NULL,
+      typeOfCard VARCHAR(255) NOT NULL
+    )
+  `);
+  console.log("Binders table created");
 }
 
 initDB()

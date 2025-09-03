@@ -17,7 +17,7 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS binders (
       id SERIAL PRIMARY KEY,
       name VARCHAR(50) UNIQUE NOT NULL,
-      typeOfCard VARCHAR(10) NOT NULL,
+      typeOfCard VARCHAR(10) NOT NULL
     )
   `);
   console.log("Binders table created");

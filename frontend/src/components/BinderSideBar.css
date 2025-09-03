@@ -1,0 +1,65 @@
+.deck-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed #22304722;
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Sidebar list line keeps name left, controls right */
+.deck-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed #22304722;
+}
+
+/* Inline, tight spacing */
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;               /* space between -, qty, + */
+}
+
+/* XS variants for sidebar controls */
+.circle-btn.xs {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  line-height: 0;
+  box-shadow: none;       /* cleaner in list */
+}
+
+.qty-pill.xs {
+  font-size: 13px;
+  padding: 2px 8px;
+  min-width: 22px;
+  text-align: center;
+  background: rgba(0,0,0,0.45);
+  border-radius: 999px;
+}
+
+.deck-sidebar {
+  background: #1a2130;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  height: 450px;         /* fixed height */
+  align-self: center;    /* ⬅ centers vertically in the grid row */
+}
+
+
+
+/* Keep your blue theme for +, dark for − */
+.circle-btn.plus { background: #3B82F6; color: #fff; }
+.circle-btn.minus { background: #2b3346; color: #e9edf4; }

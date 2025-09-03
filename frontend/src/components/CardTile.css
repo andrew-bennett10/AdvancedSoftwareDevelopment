@@ -1,0 +1,95 @@
+
+/* One tile wrapper */
+.card-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;              /* space between card and controls */
+}
+
+/* Card frame */
+.card-frame {
+  background: #101827;              /* dark background */
+  border-radius: 12px;
+  border: 3px solid transparent;    /* highlight when selected */
+  padding: 6px;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  cursor: pointer;
+}
+
+.card-frame:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+
+/* Blue border when qty > 0 */
+.card-frame--selected {
+  border-color: #3B82F6; /* blue-500 */
+}
+
+/* Card image */
+.card-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35);
+  user-select: none;
+  -webkit-user-drag: none;
+  object-fit: contain;
+}
+
+/* Controls row under the card */
+.tile-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;              /* spacing between - qty + */
+  width: 100%;
+}
+
+/* Round +/- buttons */
+.circle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  transition: transform .08s ease, filter .08s ease;
+}
+
+.circle-btn:active {
+  transform: scale(0.92);
+}
+
+.circle-btn:hover {
+  filter: brightness(1.05);
+}
+
+.circle-btn.plus {
+  background: #3B82F6; /* blue-500 */
+  color: #ffffff;
+}
+
+.circle-btn.minus {
+  background: #2b3346;
+  color: #e9edf4;
+}
+
+/* Quantity pill */
+.qty-pill {
+  font-weight: bold;
+  font-size: 16px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  line-height: 1;
+  min-width: 30px;
+  text-align: center;
+}

@@ -24,6 +24,15 @@ async function initDB() {
     )
   `);
   console.log("Favourites table created");
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS binders (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(50) UNIQUE NOT NULL,
+      type_of_card VARCHAR(255) NOT NULL
+    )
+  `);
+  console.log("Binders table created");
 }
 
 initDB()

@@ -5,48 +5,91 @@
 
 trigger:
 - main
+# Optional: enable PR builds too
+pr:
+- main
 
-pool:
-  vmImage: ubuntu-latest
+jobs:
+- job: build_and_init
+  displayName: Build & DB init
+  pool:
+    vmImage: ubuntu-latest
 
-services:
-  postgres:
-    image: postgres:13
+  # Service container for Postgres (available to the job via hostname "postgres")
+  services:
+    postgres:
+      image: postgres:13
+      env:
+        POSTGRES_USER: testuser
+        POSTGRES_PASSWORD: testpassword
+        POSTGRES_DB: testdb
+      options: >-
+        --health-cmd="pg_isready -U testuser -d testdb"
+        --health-interval=10s
+        --health-timeout=5s
+        --health-retries=10
+
+  variables:
+    NODE_VERSION: '20.x'
+    DATABASE_URL: 'postgres://testuser:testpassword@postgres:5432/testdb'
+
+  steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: NodeTool@0
+    displayName: "Use Node.js $(NODE_VERSION)"
+    inputs:
+      versionSpec: '$(NODE_VERSION)'
+
+  # Cache node_modules for frontend
+  - task: Cache@2
+    displayName: 'Cache frontend node_modules'
+    inputs:
+      key: 'npm | "$(Agent.OS)" | frontend | package-lock.json'
+      path: 'frontend/node_modules'
+      restoreKeys: |
+        npm | "$(Agent.OS)" | frontend
+    condition: exists('frontend/package-lock.json')
+
+  - script: |
+      npm ci
+      npm run build
+    displayName: 'Frontend: install & build'
+    workingDirectory: frontend
+
+  # Ensure Postgres service is healthy before touching it
+  - script: |
+      echo "Waiting for Postgres to be ready..."
+      for i in {1..30}; do
+        pg_isready -h postgres -p 5432 -U testuser -d testdb && break
+        echo "Postgres not ready yet... ($i)"
+        sleep 2
+      done
+      pg_isready -h postgres -p 5432 -U testuser -d testdb
+    displayName: 'Wait for Postgres health'
+
+  # Cache node_modules for backend
+  - task: Cache@2
+    displayName: 'Cache backend node_modules'
+    inputs:
+      key: 'npm | "$(Agent.OS)" | backend | package-lock.json'
+      path: 'backend/node_modules'
+      restoreKeys: |
+        npm | "$(Agent.OS)" | backend
+    condition: exists('backend/package-lock.json')
+
+  - script: |
+      npm ci
+      # If pg is already in package.json, the line above installs it; no extra "npm install pg" needed.
+      node dbInit.js
+    displayName: 'Backend: install & initialize DB schema'
+    workingDirectory: backend
     env:
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpassword
-      POSTGRES_DB: testdb
-    ports:
-      - 5432:5432
-    options: >-
-      --health-cmd="pg_isready -U testuser -d testdb"
-      --health-interval=10s
-      --health-timeout=5s
-      --health-retries=5
+      DATABASE_URL: $(DATABASE_URL)
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'   # use the Node.js version you need
-  displayName: 'Install Node.js'
-
-- script: |
-    cd frontend
-    npm install
-    npm run build
-  displayName: 'Install dependencies and build'
-
-# Initialise database schema (runs dbInit.js)
-- script: |
-    cd backend
-    npm install pg
-    node dbInit.js
-  displayName: 'Initialize database schema'
-  env:
-    DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb  
-
-# # Optional: run tests if you have them
-# - script: |
-#     cd frontend
-#     CI=true npm test
-#   displayName: 'Run tests'
+  # # Optional: run tests if you have them
+  # - script: |
+  #     cd frontend
+  #     CI=true npm test
+  #   displayName: 'Run tests'

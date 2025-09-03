@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Account from './Account'; 
+import Binders from './Binders';
 
 function Home() {
   const [activeComponent, setActiveComponent] = useState('home');
@@ -9,6 +10,8 @@ function Home() {
     switch (activeComponent) {
       case 'account':
         return <Account />;
+      case 'binders':
+        return <Binders />;
       default:
         return (
           <div className="text-center mt-5">
@@ -35,6 +38,11 @@ function Home() {
               <li className="nav-item">
                 <button className="btn btn-dark nav-link" onClick={() => setActiveComponent('account')}>
                   Edit Account
+                </button>
+              </li>
+              <li className="nav-item">
+                <button className="btn btn-dark nav-link" onClick={() => setActiveComponent('binders')}>
+                  Create Binder
                 </button>
               </li>
             </ul>

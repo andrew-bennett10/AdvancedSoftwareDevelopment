@@ -1,5 +1,4 @@
 import react from 'react'
-import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Login() {
   return (
@@ -30,6 +29,9 @@ function Login() {
           </div>
 
           <button type="submit" className="btn btn-primary w-100">Login</button>
+          <div className="text-center mt-3">
+            <a href="/favourites" className="text-decoration-none">Go to Favourites</a>
+          </div>
         </form>
       </div>
     </div>

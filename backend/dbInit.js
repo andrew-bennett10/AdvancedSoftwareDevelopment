@@ -12,6 +12,18 @@ async function initDB() {
     )
   `);
   console.log("Accounts table created");
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS favourites (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      card_title TEXT NOT NULL,
+      card_description TEXT,
+      card_image_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log("Favourites table created");
 }
 
 initDB()

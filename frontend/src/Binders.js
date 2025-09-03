@@ -33,26 +33,26 @@ function Binders() {
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div className="card p-4 shadow" style={{ minWidth: '300px', maxWidth: '400px', width: '100%' }}>
-        <h2 className="text-center mb-4">Create Binder</h2>
+        <h2 className="text-center mb-4">Create binder</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="name" className="form-label">Name</label>
             <input 
-              type="text" 
+              type="name" 
               className="form-control" 
-              id="text" 
-              placeholder="Insert name here" 
+              id="name" 
+              placeholder="Enter name" 
               required
             />
           </div>
 
           <div className="mb-3">
-            <label htmlFor="typeOfCard" className="form-label">type of card</label>
+            <label htmlFor="typeOfCard" className="form-label">Type of Card</label>
             <input 
               type="text" 
               className="form-control" 
               id="typeOfCard" 
-              placeholder="Insert card type (eg pokemon, item, energy etc)" 
+              placeholder="Enter card type (eg pokemon, item, energy etc)" 
               required
             />
           </div>

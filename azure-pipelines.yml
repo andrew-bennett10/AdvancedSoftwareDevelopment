@@ -13,13 +13,13 @@ services:
   postgres:
     image: postgres:13
     env:
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpassword
-      POSTGRES_DB: testdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
       - 5432:5432
     options: >-
-      --health-cmd="pg_isready -U testuser -d testdb"
+      --health-cmd="pg_isready -U postgres -d postgres"
       --health-interval=10s
       --health-timeout=5s
       --health-retries=5
@@ -43,10 +43,10 @@ steps:
     node dbInit.js
   displayName: 'Initialize database schema'
   env:
-    DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb  
+    DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
-# # Optional: run tests if you have them
-# - script: |
-#     cd frontend
-#     CI=true npm test
-#   displayName: 'Run tests'
+# Run unit tests
+- script: |
+    cd frontend
+    CI=true npm test -- --coverage --watchAll=false --testPathPattern=Account.test.js
+  displayName: 'Run Account System Unit Tests'

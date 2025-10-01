@@ -4,14 +4,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;              /* space between card and controls */
+  gap: 12px;             
 }
 
 /* Card frame */
 .card-frame {
-  background: #101827;              /* dark background */
+  background: #101827;              
   border-radius: 12px;
-  border: 3px solid transparent;    /* highlight when selected */
+  border: 3px solid transparent;   
   padding: 6px;
   transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
   cursor: pointer;

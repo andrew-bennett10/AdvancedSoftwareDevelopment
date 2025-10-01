@@ -1,5 +1,3 @@
-
-
 export function deleteCard(cards, cardId) {
   return cards.filter((c) => c.id !== cardId);
 }

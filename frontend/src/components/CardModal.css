@@ -74,7 +74,6 @@
   word-break: break-word;
 }
 
-/* ---------- Stats grid (Type / HP / Weakness / Dex / Release / Rarity) ---------- */
 .cm-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

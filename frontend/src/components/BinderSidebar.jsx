@@ -12,7 +12,6 @@ export default function BinderSidebar({ cardsState, allCards, onSave, onAdd, onR
     .filter(Boolean)
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // placeholder binder price (sum of qty * 0.00)
 
   return (
     <aside className="deck-sidebar">

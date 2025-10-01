@@ -25,7 +25,7 @@
 .qty-controls {
   display: flex;
   align-items: center;
-  gap: 8px;               /* space between -, qty, + */
+  gap: 8px;             
 }
 
 /* XS variants for sidebar controls */
@@ -34,7 +34,7 @@
   height: 28px;
   font-size: 16px;
   line-height: 0;
-  box-shadow: none;       /* cleaner in list */
+  box-shadow: none;     
 }
 
 .qty-pill.xs {
@@ -54,12 +54,36 @@
   flex-direction: column;
   gap: 18px;
 
-  height: 450px;         /* fixed height */
-  align-self: center;    /* ⬅ centers vertically in the grid row */
+  height: 450px;        
+  align-self: center;    
+}
+
+/* --- Save popup --- */
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup {
+  background: #1a2130;
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+  animation: popup-fade 250ms ease-out;
+}
+
+@keyframes popup-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 
-
-/* Keep your blue theme for +, dark for − */
 .circle-btn.plus { background: #3B82F6; color: #fff; }
 .circle-btn.minus { background: #2b3346; color: #e9edf4; }

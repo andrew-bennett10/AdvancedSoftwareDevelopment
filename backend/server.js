@@ -108,6 +108,27 @@ app.put('/change-password', async (req, res) => {
   }
 });
 
+// Delete Account endpoint
+app.delete('/delete-account', async (req, res) => {
+  const { userId } = req.body;
+  try {
+    // Delete the user account
+    const result = await db.query(
+      'DELETE FROM accounts WHERE id = $1 RETURNING *',
+      [userId]
+    );
+
+    if (result.rows.length > 0) {
+      res.send({ message: 'Account deleted successfully' });
+    } else {
+      res.status(404).send({ error: 'User not found' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(400).send({ error: 'Failed to delete account' });
+  }
+});
+
 const PORT = 12343;
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

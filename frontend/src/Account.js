@@ -149,6 +149,44 @@ function Account() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:12343/delete-account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id
+        })
+      });
+
+      if (res.ok) {
+        alert('Account deleted successfully');
+        
+        // Clear all user data
+        localStorage.removeItem('userData');
+        sessionStorage.clear();
+        
+        // Redirect to login
+        navigate('/');
+      } else {
+        const errData = await res.json();
+        alert(errData.error || 'Failed to delete account');
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Could not connect to server");
+    }
+  };
+
   return (
     <div>
       <NavigationBar activePage="account" />
@@ -245,6 +283,20 @@ function Account() {
                     Change Password
                   </button>
                 </form>
+              </div>
+            </div>
+
+            {/* Delete Account Section */}
+            <div className="card border-danger shadow mt-4">
+              <div className="card-body">
+                <h4 className="card-title text-danger mb-3">Danger Zone</h4>
+                <p className="text-muted">Once you delete your account, there is no going back. Please be certain.</p>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={handleDeleteAccount}
+                >
+                  Delete Account
+                </button>
               </div>
             </div>
           </div>

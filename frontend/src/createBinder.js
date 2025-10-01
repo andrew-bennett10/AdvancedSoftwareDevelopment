@@ -1,19 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Home from './Home'; 
-import CreateBinder from './createBinder';
 
-function Binders({ resetKey }) {
+function CreateBinder() {
   const [showHome, setShowHome] = useState(false);
     const [activeComponent, setActiveComponent] = useState('home');
-
- // when you click the binders button, reset active component to binders so there's no infiinte loop to createBinder
-  useEffect(() => {
-    if (typeof resetKey !== 'undefined') {
-      setActiveComponent('binders');
-      setShowHome(false);
-    }
-  }, [resetKey]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,14 +15,10 @@ function Binders({ resetKey }) {
     return <Home />; // render Home component
   }
 
-  if (activeComponent === 'createBinder') {
-    return <CreateBinder />;
-  }
-
   const renderComponent = () => {
       switch (activeComponent) {
-        case 'binders':
-          return <Binders />;
+        case 'createBinder':
+          return <CreateBinder />;
         default:
           return (
             <div className="text-center mt-5">
@@ -46,17 +33,9 @@ function Binders({ resetKey }) {
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div className="card p-4 shadow" style={{ minWidth: '300px', maxWidth: '400px', width: '100%' }}>
-        <h2 className="text-center mb-4">Binders</h2>
-        <button
-          type="button"
-          className="btn btn-primary w-100"
-          onClick={() => setActiveComponent('createBinder')}
-        >
-          Create Binder
-        </button>
-
-        {/* <form onSubmit={handleSubmit}> */}
-          {/* <div className="mb-3">
+        <h2 className="text-center mb-4">Create binder</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
             <label htmlFor="name" className="form-label">Name</label>
             <input 
               type="name" 
@@ -76,12 +55,12 @@ function Binders({ resetKey }) {
               placeholder="Enter card type (eg pokemon, energy etc)" 
               required
             />
-          </div> */}
+          </div>
 
-          {/* <button type="submit" className="btn btn-primary w-100">
+          <button type="submit" className="btn btn-primary w-100">
             Create Binder
           </button>
-        </form> */}
+        </form>
       </div>
 
     {/* Component content
@@ -93,4 +72,4 @@ function Binders({ resetKey }) {
   );
 }
 
-export default Binders;
+export default CreateBinder;

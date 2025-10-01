@@ -6,6 +6,8 @@ import Binders from './Binders';
 
 function Home() {
   const [activeComponent, setActiveComponent] = useState('home');
+  // key to signal Binders to reset its internal state
+  const [binderResetKey, setBinderResetKey] = useState(0);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
@@ -46,7 +48,8 @@ function Home() {
       case 'account':
         return <Account />;
       case 'binders':
-        return <Binders />;
+        // pass reset key prop so you can reset its local state later
+        return <Binders resetKey={binderResetKey} />;
       default:
         return (
           <div className="text-center mt-5">
@@ -76,8 +79,14 @@ function Home() {
                 </button>
               </li>
               <li className="nav-item">
-                <button className="btn btn-dark nav-link" onClick={() => setActiveComponent('binders')}>
-                  Create Binder
+                <button
+                  className="btn btn-dark nav-link"
+                  onClick={() => {
+                    // show Binders view and increment key to reset its internal state
+                    setActiveComponent('binders');
+                    setBinderResetKey(k => k + 1);
+                  }}
+                >Binders
                 </button>
               </li>
             </ul>

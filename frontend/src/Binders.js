@@ -52,7 +52,7 @@ function Binders() {
               type="text" 
               className="form-control" 
               id="typeOfCard" 
-              placeholder="Enter card type (eg pokemon, item, energy etc)" 
+              placeholder="Enter card type (eg pokemon, energy etc)" 
               required
             />
           </div>

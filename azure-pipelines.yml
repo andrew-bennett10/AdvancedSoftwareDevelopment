@@ -45,8 +45,8 @@ steps:
   env:
     DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
-# # Optional: run tests if you have them
-# - script: |
-#     cd frontend
-#     CI=true npm test
-#   displayName: 'Run tests'
+# Run unit tests
+- script: |
+    cd frontend
+    CI=true npm test -- --coverage --watchAll=false --testPathPattern=Account.test.js
+  displayName: 'Run Account System Unit Tests'

@@ -14,13 +14,14 @@ The project directory contains the README and azure-pipeline file.
 Record parts of code you are responsible for.  
 
 Andrew Bennett
-- backend/dbInit.js
-- backend/local_db.sh
-- backend/server.js update-account, change-password, delete-account
-- frontend/Account.js
-- frontend/Home.js session management
-- frontend/SignUp.js session improvements
-- frontend/NavigationBar.js
+- backend/dbInit.js (added)
+- backend/local_db.sh (added)
+- backend/server.js (functions: update-account, change-password, delete-account)
+- frontend/Account.js (added)
+- frontend/Account.test.js (unit tests for account system)
+- frontend/Home.js (session management)
+- frontend/SignUp.js (session improvements)
+- frontend/NavigationBar.js (added)
 
 
 ### How to run locally:

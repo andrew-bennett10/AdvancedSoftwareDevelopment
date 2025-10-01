@@ -10,11 +10,11 @@ app.use(express.json());
 app.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
   try {
-    await db.query(
-      'INSERT INTO accounts (username, email, password) VALUES ($1, $2, $3)',
+    const result = await db.query(
+      'INSERT INTO accounts (username, email, password) VALUES ($1, $2, $3) RETURNING *',
       [username, email, password]
     );
-    res.status(201).send({ message: 'User created successfully' });
+    res.status(201).send({ message: 'User created successfully', user: result.rows[0] });
   } catch (err) {
     console.error(err);
     res.status(400).send({ error: 'Signup failed' });

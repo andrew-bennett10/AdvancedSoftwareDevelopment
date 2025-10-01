@@ -12,9 +12,12 @@ function Home() {
   // Check if user is logged in on component mount
   useEffect(() => {
     const userData = localStorage.getItem('userData');
+    console.log('Raw userData from localStorage:', userData);
+    
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData);
+        console.log('Parsed user data:', parsedUser);
         setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing user data:', error);
@@ -24,6 +27,7 @@ function Home() {
       }
     } else {
       // No user data found, redirect to login
+      console.log('No user data found, redirecting to login');
       navigate('/');
       return;
     }

@@ -131,6 +131,73 @@ app.delete('/delete-account', async (req, res) => {
   }
 });
 
+// Add create-binder endpoint
+app.post('/create-binder', async (req, res) => {
+  const { name, typeOfCard } = req.body;
+  try {
+    const result = await db.query(
+      'INSERT INTO binders (name, typeOfCard) VALUES ($1, $2) RETURNING *',
+      [name, typeOfCard]
+    );
+    // console.log('Inserted binder:', result.rows[0]); // we do a little bit of debugging
+    res.status(201).send({ message: 'A wild Binder has appeared!', binder: result.rows[0] });
+  } catch (err) {
+    console.error('Error creating binder:', err);
+    res.status(400).send({ error: 'The wild Binder has fled...' });
+  }
+});
+
+// Add GET /binders endpoint so I can actually get the binders from the DB
+app.get('/binders', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM binders ORDER BY id');
+    // console.log('GET /binders -> rows:', result.rows.length); // we do a little bit of debugging
+    res.send({ binders: result.rows });
+  } catch (err) {
+    console.error('Error fetching binders:', err);
+    res.status(500).send({ error: 'Failed to access PC' });
+  }
+});
+
+// Add GET /binders/:id to get a single binder for editing
+app.get('/binders/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await db.query('SELECT * FROM binders WHERE id = $1', [id]);
+    if (result.rows.length > 0) {
+      res.send({ binder: result.rows[0] });
+    } else {
+      res.status(404).send({ error: 'Binder not found' });
+    }
+  } catch (err) {
+    console.error('Error fetching binder by id:', err);
+    res.status(500).send({ error: 'Failed to access PC' });
+  }
+});
+
+// Edit binder endpoint 
+app.post('/edit-binder', async (req, res) => {
+  const { id, name, typeOfCard } = req.body;
+  if (!id) {
+    return res.status(400).send({ error: 'Missing binder id' });
+  }
+  try {
+    const result = await db.query(
+      'UPDATE binders SET name = $1, typeOfCard = $2 WHERE id = $3 RETURNING *',
+      [name, typeOfCard, id]
+    );
+    if (result.rows.length > 0) {
+      console.log('Your binder has evolved!:', result.rows[0]);
+      res.send({ message: 'Binder updated', binder: result.rows[0] });
+    } else {
+      res.status(404).send({ error: 'Binder not found' });
+    }
+  } catch (err) {
+    console.error('Error updating binder:', err);
+    res.status(400).send({ error: 'You stopped the evolution' });
+  }
+});
+
 const PORT = 12343;
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

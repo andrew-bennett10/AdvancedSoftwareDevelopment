@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const binderRoutes = require('./routes/binders');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/binders', binderRoutes);
 
 // Sign Up endpoint
 app.post('/signup', async (req, res) => {

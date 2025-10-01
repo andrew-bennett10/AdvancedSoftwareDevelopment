@@ -1,5 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 function SignUp() {
@@ -10,6 +10,13 @@ function SignUp() {
     password: '',
     confirmPassword: ''
   });
+
+
+  useEffect(() => {
+    if (localStorage.getItem('userData')) {
+      navigate('/home');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -35,8 +42,14 @@ function SignUp() {
       });
 
       if (res.ok) {
+        const data = await res.json();
+        console.log("Signed up user:", data.user);
+        
+        // Store user data for the session (same as login)
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        
         alert("Signup successful!");
-        navigate("/home"); // instead of just rendering <Home />
+        navigate("/home");
       } else {
         const errData = await res.json();
         alert(errData.error || 'Signup failed');

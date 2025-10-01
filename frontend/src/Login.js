@@ -1,11 +1,10 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import Home from './Home';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Login() {
-  const [showHome, setShowHome] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -15,7 +14,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:5000/login', {
+      const res = await fetch('http://localhost:12343/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -24,7 +23,11 @@ function Login() {
       if (res.ok) {
         const data = await res.json();
         console.log("Logged in user:", data.user);
-        setShowHome(true);
+        
+        // Store user data for the session
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        
+        navigate('/home');
       } else {
         const errData = await res.json();
         alert(errData.error || 'Login failed');
@@ -34,10 +37,6 @@ function Login() {
       alert("Could not connect to server");
     }
   };
-
-  if (showHome) {
-    return <Home />;
-  }
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">

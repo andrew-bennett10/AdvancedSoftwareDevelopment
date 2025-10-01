@@ -1,12 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Account from './Account'; 
 import Binders from './Binders';
 
 function Home() {
   const [activeComponent, setActiveComponent] = useState('home');
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  // Check if user is logged in on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('userData');
+        navigate('/');
+        return;
+      }
+    } else {
+      // No user data found, redirect to login
+      navigate('/');
+      return;
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    // Clear any stored authentication data
+    setUser(null); // Clear user state
+    localStorage.removeItem('userData'); // Clear user data if stored
+    
+    // Clear any form data that might be cached
+    sessionStorage.clear(); // Clear session storage
+    
+    navigate('/');
+  };
 
   const renderComponent = () => {
+    
     switch (activeComponent) {
       case 'account':
         return <Account />;
@@ -15,7 +50,7 @@ function Home() {
       default:
         return (
           <div className="text-center mt-5">
-            <h1>Welcome Home!</h1>
+            <h1>Welcome {user?.username || user?.email || 'User'}!</h1>
             <p>You are successfully logged in.</p>
           </div>
         );
@@ -43,6 +78,13 @@ function Home() {
               <li className="nav-item">
                 <button className="btn btn-dark nav-link" onClick={() => setActiveComponent('binders')}>
                   Create Binder
+                </button>
+              </li>
+            </ul>
+            <ul className="navbar-nav">
+              <li className="nav-item">
+                <button className="btn btn-outline-light" onClick={handleLogout}>
+                  Logout
                 </button>
               </li>
             </ul>

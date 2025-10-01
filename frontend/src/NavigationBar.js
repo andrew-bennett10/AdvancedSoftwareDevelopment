@@ -39,7 +39,7 @@ function NavigationBar({ activePage }) {
                 className={`btn btn-dark nav-link ${activePage === 'binders' ? 'active' : ''}`}
                 onClick={() => navigate('/binders')}
               >
-                Create Binder
+                Binders
               </button>
             </li>
           </ul>

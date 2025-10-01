@@ -11,6 +11,7 @@ function Binders() {
     name: '',
     typeOfCard: ''
   });
+  const [binders, setBinders] = useState([]);
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -32,6 +33,27 @@ function Binders() {
       return;
     }
   }, [navigate]);
+
+  // Fetch binders from backend
+  useEffect(() => {
+    if (!user) return; // wait until auth check sets the user
+
+    const fetchBinders = async () => {
+      try {
+        const res = await fetch('http://localhost:12343/binders');
+        if (!res.ok) {
+          console.error('Failed to fetch binders', res.status);
+          return;
+        }
+        const data = await res.json();
+        setBinders(data.binders || []);
+      } catch (err) {
+        console.error('Error fetching binders:', err);
+      }
+    };
+
+    fetchBinders();
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -60,36 +82,40 @@ function Binders() {
         <div className="row justify-content-center">
           <div className="col-md-6">
             <div className="card p-4 shadow">
-              <h2 className="text-center mb-4">Create Binder</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="name" className="form-label">Name</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    id="name" 
-                    placeholder="Enter name" 
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
+              <h2 className="text-center mb-4">Binders</h2>
+                {/* List binders from DB */}
+                <div className="mt-4">
+                  {binders.length === 0 ? (
+                    <p>No binders found.</p>
+                  ) : (
+                    binders.map((b) => (
+                      <div key={b.id} className="d-flex align-items-center mb-2 justify-content-between">
+                        <p className="mb-0 flex-grow-1 pe-2">
+                          {b.name} - {b.typeofcard || b.typeOfCard || b.typeofCard || b.typeOfcard || ''}
+                        </p>
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn btn-sm btn-primary px-3"
+                            onClick={() => navigate('/view-binder', { state: { id: b.id } })}
+                          >View
+                          </button>
+                          <button
+                            className="btn btn-sm btn-primary px-3"
+                            onClick={() => navigate('/edit-binder', { state: { id: b.id } })}
+                          >Edit
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-
-                <div className="mb-3">
-                  <label htmlFor="typeOfCard" className="form-label">Type of Card</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    id="typeOfCard" 
-                    placeholder="Enter card type (eg pokemon, item, energy etc)" 
-                    required
-                    value={formData.typeOfCard}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <button type="submit" className="btn btn-primary w-100">
-                  Create Binder
+               <form onSubmit={handleSubmit}>
+                {/* navigate to the create Binder page */}
+                <button
+                  type="button"
+                  className="btn btn-primary w-100"
+                  onClick={() => navigate('/create-binder')}
+                >Create Binder
                 </button>
               </form>
             </div>

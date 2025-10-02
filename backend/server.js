@@ -197,6 +197,87 @@ app.delete('/api/favourites/:id', async (req, res) => {
   }
 });
 
+// Binders endpoints
+app.post('/create-binder', async (req, res) => {
+  const { name, typeOfCard } = req.body || {};
+  if (!name || !typeOfCard) {
+    return res.status(400).send({ error: 'Binder name and type are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      'INSERT INTO binders (name, type_of_card) VALUES ($1, $2) RETURNING *',
+      [name, typeOfCard]
+    );
+    const binder = { ...rows[0], typeOfCard: rows[0].type_of_card };
+    res.status(201).send({ message: 'Binder created', binder });
+  } catch (err) {
+    console.error('Error creating binder:', err);
+    res.status(400).send({ error: 'Failed to create binder' });
+  }
+});
+
+app.get('/binders', async (_req, res) => {
+  try {
+    const { rows } = await db.query('SELECT id, name, type_of_card FROM binders ORDER BY id');
+    const binders = rows.map(({ id, name, type_of_card }) => ({
+      id,
+      name,
+      typeOfCard: type_of_card,
+    }));
+    res.send({ binders });
+  } catch (err) {
+    console.error('Error fetching binders:', err);
+    res.status(500).send({ error: 'Failed to fetch binders' });
+  }
+});
+
+app.get('/binders/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) {
+    return res.status(400).send({ error: 'Invalid binder id' });
+  }
+  try {
+    const { rows } = await db.query('SELECT id, name, type_of_card FROM binders WHERE id = $1', [id]);
+    if (rows.length === 0) {
+      return res.status(404).send({ error: 'Binder not found' });
+    }
+    const binder = {
+      id: rows[0].id,
+      name: rows[0].name,
+      typeOfCard: rows[0].type_of_card,
+    };
+    res.send({ binder });
+  } catch (err) {
+    console.error('Error fetching binder by id:', err);
+    res.status(500).send({ error: 'Failed to fetch binder' });
+  }
+});
+
+app.post('/edit-binder', async (req, res) => {
+  const { id, name, typeOfCard } = req.body || {};
+  if (!id) {
+    return res.status(400).send({ error: 'Missing binder id' });
+  }
+  try {
+    const { rows } = await db.query(
+      'UPDATE binders SET name = $1, type_of_card = $2 WHERE id = $3 RETURNING id, name, type_of_card',
+      [name, typeOfCard, id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).send({ error: 'Binder not found' });
+    }
+    const binder = {
+      id: rows[0].id,
+      name: rows[0].name,
+      typeOfCard: rows[0].type_of_card,
+    };
+    res.send({ message: 'Binder updated', binder });
+  } catch (err) {
+    console.error('Error updating binder:', err);
+    res.status(400).send({ error: 'Failed to update binder' });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

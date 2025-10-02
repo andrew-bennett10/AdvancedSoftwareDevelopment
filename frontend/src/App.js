@@ -6,6 +6,9 @@ import Home from './Home';
 import Account from './Account';
 import Binders from './Binders';
 import Favourites from './Favourites';
+import CreateBinder from './createBinder';
+import EditBinder from './editBinder';
+import ViewBinder from './viewBinder';
 
 function App() {
   return (
@@ -17,6 +20,9 @@ function App() {
         <Route path="/account" element={<Account />} />
         <Route path="/binders" element={<Binders />} />
         <Route path="/favourites" element={<Favourites />} />
+        <Route path="/create-binder" element={<CreateBinder />} />
+        <Route path="/edit-binder" element={<EditBinder />} />
+        <Route path="/view-binder" element={<ViewBinder />} />
       </Routes>
     </Router>
   );

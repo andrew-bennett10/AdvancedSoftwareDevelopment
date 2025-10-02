@@ -36,3 +36,32 @@
     transform: rotate(360deg);
   }
 }
+
+.favourite-button-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.favourite-button-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+.favourite-button-success {
+  color: #047857;
+}
+
+.card-search-form {
+  margin-top: 1rem;
+}
+
+.card-search-results .card {
+  border: none;
+  border-radius: 20px;
+}
+
+.card-search-results .card-img-top {
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}

@@ -6,6 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/health', (_req, res) => {
+  res.send({ ok: true });
+});
+
 // Sign Up endpoint
 app.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
@@ -129,7 +133,71 @@ app.delete('/delete-account', async (req, res) => {
   }
 });
 
-const PORT = 12343;
+// Favourites endpoints
+app.get('/api/favourites', async (req, res) => {
+  const userId = Number(req.query.userId);
+  if (!userId) {
+    return res.status(400).send({ error: 'Missing or invalid userId' });
+  }
+  try {
+    const { rows } = await db.query(
+      `SELECT id, user_id, card_title, card_description, card_image_url, created_at
+       FROM favourites
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+    res.send(rows);
+  } catch (err) {
+    console.error('Error fetching favourites:', err);
+    res.status(500).send({ error: 'Failed to fetch favourites' });
+  }
+});
+
+app.post('/api/favourites', async (req, res) => {
+  const { userId, cardTitle, cardDescription = '', cardImageUrl = '' } = req.body || {};
+  if (!userId || !cardTitle) {
+    return res.status(400).send({ error: 'userId and cardTitle are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO favourites (user_id, card_title, card_description, card_image_url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, user_id, card_title, card_description, card_image_url, created_at`,
+      [userId, cardTitle, cardDescription, cardImageUrl]
+    );
+    const favourite = rows[0];
+    res.status(201).send({ favourite });
+  } catch (err) {
+    console.error('Error creating favourite:', err);
+    res.status(500).send({ error: 'Failed to create favourite' });
+  }
+});
+
+app.delete('/api/favourites/:id', async (req, res) => {
+  const favId = Number(req.params.id);
+  const userId = Number(req.query.userId || req.body?.userId);
+  if (!favId || !userId) {
+    return res.status(400).send({ error: 'favourite id and userId are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      `DELETE FROM favourites
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [favId, userId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).send({ error: 'Favourite not found' });
+    }
+    res.send({ ok: true });
+  } catch (err) {
+    console.error('Error deleting favourite:', err);
+    res.status(500).send({ error: 'Failed to delete favourite' });
+  }
+});
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
 });

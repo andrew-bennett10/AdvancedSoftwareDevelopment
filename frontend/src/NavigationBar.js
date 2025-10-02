@@ -27,6 +27,14 @@ function NavigationBar({ activePage }) {
               </button>
             </li>
             <li className="nav-item">
+              <button
+                className={`btn btn-dark nav-link ${activePage === 'favourites' ? 'active' : ''}`}
+                onClick={() => navigate('/favourites')}
+              >
+                Favourites
+              </button>
+            </li>
+            <li className="nav-item">
               <button 
                 className={`btn btn-dark nav-link ${activePage === 'account' ? 'active' : ''}`}
                 onClick={() => navigate('/account')}

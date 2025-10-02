@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavigationBar from './NavigationBar';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+
 function Account() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -59,7 +61,7 @@ function Account() {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:12343/update-account', {
+      const res = await fetch(`${API_BASE}/update-account`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,7 +115,7 @@ function Account() {
     }
 
     try {
-      const res = await fetch('http://localhost:12343/change-password', {
+      const res = await fetch(`${API_BASE}/change-password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,7 +162,7 @@ function Account() {
     }
 
     try {
-      const res = await fetch('http://localhost:12343/delete-account', {
+      const res = await fetch(`${API_BASE}/delete-account`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -35,7 +35,7 @@ function FavouriteButton({
   onError,
   className = '',
   children,
-  disableWhenLoggedOut = true,
+  disableWhenLoggedOut = false,
   ...buttonProps
 }) {
   const [status, setStatus] = useState('idle');

@@ -48,5 +48,5 @@ steps:
 # Run unit tests
 - script: |
     cd frontend
-    CI=true npm test -- --coverage --watchAll=false --testPathPattern=Account.test.js
-  displayName: 'Run Account System Unit Tests'
+    CI=true npm test -- --coverage --watchAll=false
+  displayName: 'Run frontend unit tests'

@@ -8,9 +8,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/binders', binderRoutes);
-app.use('/binder', binderRoutes);
 app.use('/api/cards', cardRoutes);
-app.use('/cards', cardRoutes);
+
+app.get('/health', (_req, res) => {
+  res.json({ ok: true });
+});
 
 // Sign Up endpoint
 app.post('/signup', async (req, res) => {
@@ -211,7 +213,12 @@ app.post('/edit-binder', async (req, res) => {
   }
 });
 
-const PORT = 12343;
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 12343;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

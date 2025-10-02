@@ -1,10 +1,6 @@
-const { Pool } = require('pg');
 const db = require('../db');
 
-const connectionString = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres';
-
-// Reuse the existing pool when possible; fall back to creating one linked to db exports.
-const pool = db._pool || (db._pool = new Pool({ connectionString }));
+const pool = db.pool;
 
 function httpError(status, message) {
   const err = new Error(message);

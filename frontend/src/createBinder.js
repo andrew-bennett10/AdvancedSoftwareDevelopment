@@ -5,12 +5,13 @@ import NavigationBar from './NavigationBar';
 
 function CreateBinder() {
   const navigate = useNavigate();
-  // eslint-disable-next-line
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     typeOfCard: ''
   });
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -37,44 +38,98 @@ function CreateBinder() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  const resolveAccountId = () => {
+    const storedAccountId = Number(localStorage.getItem('accountId'));
+    if (Number.isFinite(storedAccountId) && storedAccountId > 0) {
+      return storedAccountId;
+    }
+
+    if (user && user.id) {
+      const parsed = Number(user.id);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        localStorage.setItem('accountId', String(parsed));
+        return parsed;
+      }
+    }
+
+    const storedUser = localStorage.getItem('userData');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.id) {
+          const id = Number(parsedUser.id);
+          if (Number.isFinite(id) && id > 0) {
+            localStorage.setItem('accountId', String(id));
+            setUser(parsedUser);
+            return id;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse stored userData:', err);
+      }
+    }
+
+    return NaN;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // create binder via backend endpoint (same approach as accounts)
+    setError('');
+
+    const accountId = resolveAccountId();
+    if (!Number.isFinite(accountId) || accountId <= 0) {
+      setError('Account information is missing. Please log in again.');
+      return;
+    }
+
+    const title = formData.name.trim();
+    if (!title) {
+      setError('Please enter a binder title.');
+      return;
+    }
+
+    const format = formData.typeOfCard.trim();
+    const payload = { accountId, title };
+    if (format) {
+      payload.format = format;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      const res = await fetch('http://localhost:12343/create-binder', {
+      const response = await fetch('http://localhost:12343/create-binder', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          typeOfCard: formData.typeOfCard
-        })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        console.log('Created binder:', data.binder);
-        alert('A wild Binder has appeared!');
-        // go back to Binders page
-        navigate('/binders');
-      } else {
-        const errData = await res.json();
-        alert(errData.error || 'The wild binder has fled...');
+      const text = await response.text();
+      let data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseErr) {
+          console.error('Failed to parse response JSON:', parseErr);
+        }
       }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create binder');
+      }
+
+      console.log('Created binder:', data);
+      alert('Binder created successfully!');
+      setFormData({ name: '', typeOfCard: '' });
+      navigate('/binders');
     } catch (err) {
-      console.error('Error:', err);
-      alert('Could not connect to server');
+      console.error('Create binder error:', err);
+      setError(err.message || 'Failed to create binder');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // TODO: Add backend API call to create binder
-    // console.log('Creating binder:', formData);
-    // alert('Binder creation functionality - to be implemented');
-    
-    // Clear form
-    setFormData({
-      name: '',
-      typeOfCard: ''
-    });
   };
 
   return (
@@ -108,14 +163,19 @@ function CreateBinder() {
                     className="form-control" 
                     id="typeOfCard" 
                     placeholder="Enter card type (eg pokemon, item, energy etc)" 
-                    required
                     value={formData.typeOfCard}
                     onChange={handleChange}
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100">
-                  Create Binder
+                {error && (
+                  <div className="alert alert-danger" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Binder'}
                 </button>
               </form>
             </div>

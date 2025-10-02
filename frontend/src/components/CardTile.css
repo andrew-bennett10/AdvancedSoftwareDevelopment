@@ -48,6 +48,10 @@
   width: 100%;
 }
 
+.tile-actions--readOnly {
+  gap: 0;
+}
+
 /* Round +/- buttons */
 .circle-btn {
   width: 42px;
@@ -92,4 +96,11 @@
   line-height: 1;
   min-width: 30px;
   text-align: center;
+}
+
+.qty-pill.readOnly {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 14px;
+  padding: 6px 16px;
 }

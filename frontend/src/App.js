@@ -8,6 +8,8 @@ import Binders from './Binders';
 import CreateBinder from './createBinder';
 import EditBinder from './editBinder';
 import ViewBinder from './viewBinder';
+import ViewBinderPage from './pages/ViewBinderPage';
+import AddToBinderPage from './pages/AddToBinderPage';
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/account" element={<Account />} />
         <Route path="/binders" element={<Binders />} />
+        <Route path="/binder/:binderId" element={<ViewBinderPage />} />
+        <Route path="/binder/:binderId/add" element={<AddToBinderPage />} />
         <Route path="/create-binder" element={<CreateBinder />} />
         <Route path="/edit-binder" element={<EditBinder />} />
         <Route path="/view-binder" element={<ViewBinder />} />

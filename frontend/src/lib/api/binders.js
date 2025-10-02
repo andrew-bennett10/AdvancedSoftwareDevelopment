@@ -58,13 +58,17 @@ export function getBinderCard(binderId, cardId) {
   return request(`/binders/${binderId}/cards/${cardId}`, { method: 'GET' });
 }
 
-export function addCard(binderId, body) {
-  return request(`/binders/${binderId}/cards`, { method: 'POST', body });
+export function addCard(binderId, cardId) {
+  return request(`/binders/${binderId}/cards`, { method: 'POST', body: { cardId } });
 }
 
-export function changeQty(binderId, cardId, delta) {
+export function updateCardQty(binderId, cardId, quantity) {
   return request(`/binders/${binderId}/cards/${cardId}`, {
     method: 'PATCH',
-    body: { delta },
+    body: { quantity },
   });
+}
+
+export function deleteCard(binderId, cardId) {
+  return request(`/binders/${binderId}/cards/${cardId}`, { method: 'DELETE' });
 }

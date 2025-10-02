@@ -33,3 +33,13 @@ Andrew Bennett
 6. `npm start` to run the front end. If you get weird package errors, try deleting `node_modules` then run `npm install`.
 
 To delete the database container, run `docker stop postgres && docker rm postgres`.
+
+### Cards catalog seed
+After the database is running, populate the mock cards catalog once with:
+
+```
+psql "$DATABASE_URL" -f backend/DB/migrations/001_create_cards.sql
+psql "$DATABASE_URL" -f backend/DB/seeds/seed_cards.sql
+```
+
+Re-running the seed is safe; it performs UPSERTs on each card id.

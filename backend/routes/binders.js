@@ -9,7 +9,8 @@ const requiredExports = [
   'listBinderCards',
   'getBinderCard',
   'addOrIncrement',
-  'updateQuantity',
+  'setQuantity',
+  'removeCard',
 ];
 
 for (const name of requiredExports) {
@@ -97,24 +98,42 @@ router.post(
   })
 );
 
-// PATCH /api/binders/:binderId/cards/:cardId  { delta: 1 | -1 } -> inc/dec or remove at 0
+// PATCH /api/binders/:binderId/cards/:cardId  { quantity } -> set qty (0 deletes)
 router.patch(
   '/:binderId/cards/:cardId',
   asyncHandler(async (req, res) => {
     const accountId = getAccountId(req);
     const binderId = parseBinderId(req);
     const cardId = parseCardId(req);
-    const delta = Number(req.body && req.body.delta);
+    const quantity = Number(req.body && req.body.quantity);
 
-    if (delta !== 1 && delta !== -1) {
-      return res.status(400).json({ error: 'delta must be 1 or -1' });
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      return res.status(400).json({ error: 'quantity must be a non-negative integer' });
     }
 
     await binderService.assertBinderOwnership(binderId, accountId);
-    const result = await binderService.updateQuantity(binderId, cardId, delta);
+    const result = await binderService.setQuantity(binderId, cardId, quantity);
 
-    // result: { action:'updated'|'removed', qty?:number, cardId }
+    if (!result) {
+      return res.json({ ok: true, data: { deleted: true, cardId } });
+    }
+
     res.json({ ok: true, data: result });
+  })
+);
+
+// DELETE /api/binders/:binderId/cards/:cardId -> remove card entirely
+router.delete(
+  '/:binderId/cards/:cardId',
+  asyncHandler(async (req, res) => {
+    const accountId = getAccountId(req);
+    const binderId = parseBinderId(req);
+    const cardId = parseCardId(req);
+
+    await binderService.assertBinderOwnership(binderId, accountId);
+    await binderService.removeCard(binderId, cardId);
+
+    res.json({ ok: true, data: { deleted: true, cardId } });
   })
 );
 

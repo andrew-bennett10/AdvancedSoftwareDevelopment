@@ -9,7 +9,13 @@ function CardModal({ card, onClose }) {
       <div className="cm-dialog" onClick={(e) => e.stopPropagation()}>
         {/* Left: image */}
         <div className="cm-left">
-          <img className="cm-image" src={card.imageUrl} alt={card.name} />
+          {card.imageUrl && card.imageUrl !== 'Image not available yet' ? (
+            <img className="cm-image" src={card.imageUrl} alt={card.name} />
+          ) : (
+            <div className="cm-image cm-image--placeholder">
+              {card.imageUrl || 'Image not available yet'}
+            </div>
+          )}
         </div>
 
         {/* Right: details */}

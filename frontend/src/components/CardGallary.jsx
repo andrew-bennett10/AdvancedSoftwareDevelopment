@@ -9,7 +9,7 @@ function CardGallery({ cards, quantities, onAdd, onRemove, onView }) {
         <CardTile
           key={card.id}
           card={card}
-          qty={quantities[card.id] || 0}
+          qty={(quantities && (quantities[card.id] ?? quantities[card.card_id])) ?? card.qty ?? 0}
           onAdd={onAdd}
           onRemove={onRemove}
           onView={onView}

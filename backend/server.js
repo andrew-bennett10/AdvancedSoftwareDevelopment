@@ -2,11 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const binderRoutes = require('./routes/binders');
+const cardRoutes = require('./routes/cards');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/binders', binderRoutes);
+app.use('/binder', binderRoutes);
+app.use('/api/cards', cardRoutes);
+app.use('/cards', cardRoutes);
 
 // Sign Up endpoint
 app.post('/signup', async (req, res) => {
@@ -133,17 +137,26 @@ app.delete('/delete-account', async (req, res) => {
 
 // Add create-binder endpoint
 app.post('/create-binder', async (req, res) => {
-  const { name, typeOfCard } = req.body;
   try {
-    const result = await db.query(
-      'INSERT INTO binders (name, typeOfCard) VALUES ($1, $2) RETURNING *',
-      [name, typeOfCard]
+    console.log('POST /create-binder body:', req.body);
+    const { accountId, name, title: titleFromBody, format } = req.body;
+
+    const title = (titleFromBody ?? name ?? '').trim();
+    if (!accountId || !title) {
+      return res.status(400).json({ error: 'accountId and title are required' });
+    }
+
+    const { rows } = await db.query(
+      `INSERT INTO binders (account_id, title, format)
+       VALUES ($1,$2,COALESCE($3, 'Standard'))
+       RETURNING id, account_id, title, format, created_at`,
+      [accountId, title, format]
     );
-    // console.log('Inserted binder:', result.rows[0]); // we do a little bit of debugging
-    res.status(201).send({ message: 'A wild Binder has appeared!', binder: result.rows[0] });
+
+    return res.status(201).json(rows[0]);
   } catch (err) {
     console.error('Error creating binder:', err);
-    res.status(400).send({ error: 'The wild Binder has fled...' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

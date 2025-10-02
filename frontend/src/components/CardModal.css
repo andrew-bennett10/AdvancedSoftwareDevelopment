@@ -35,6 +35,19 @@
   object-fit: cover;
 }
 
+.cm-image--placeholder {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 20px;
+  color: #9eacc2;
+  font-weight: 600;
+  min-height: 320px;
+  border-radius: 10px;
+  background: rgba(15, 15, 16, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
 /* Right side (details) */
 .cm-right {
   display: flex;

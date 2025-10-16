@@ -1,5 +1,6 @@
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres_test';
 
+// Confirms the API server comes up and responds to a simple health check.
 const request = require('supertest');
 const app = require('../server');
 

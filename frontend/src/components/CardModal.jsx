@@ -1,7 +1,7 @@
 import React from "react";
 import "./CardModal.css";
 
-function CardModal({ card, onClose }) {
+function CardModal({ card, onClose, onRemove, removeLabel, removeDisabled = false }) {
   if (!card) return null;
 
   return (
@@ -83,9 +83,21 @@ function CardModal({ card, onClose }) {
   )}
 </div>
 
-          <button className="cm-closeBtn" onClick={onClose}>
-            Close
-          </button>
+          <div className="cm-actions">
+            {typeof onRemove === 'function' && (
+              <button
+                type="button"
+                className="cm-removeBtn"
+                onClick={() => onRemove(card)}
+                disabled={removeDisabled}
+              >
+                {removeLabel || "Remove"}
+              </button>
+            )}
+            <button type="button" className="cm-closeBtn" onClick={onClose}>
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -16,8 +16,25 @@
 .binder-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.binder-header-left,
+.binder-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.binder-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.binder-header-right {
+  justify-content: flex-end;
 }
 
 .binder-header .btn {

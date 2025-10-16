@@ -174,18 +174,39 @@
   line-height: 1.4;
 }
 
-/* Close button */
-.cm-closeBtn {
-  align-self: flex-start;
+/* Action buttons */
+.cm-actions {
   margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cm-removeBtn,
+.cm-closeBtn {
   padding: 10px 14px;
-  background: #ff4444;
-  color: #fff;
   border: 0;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: transform 0.06s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cm-removeBtn {
+  background: #ff5555;
+  color: #fff;
+}
+.cm-removeBtn:hover { opacity: 0.92; }
+.cm-removeBtn:active { transform: translateY(1px); }
+.cm-removeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Close button */
+.cm-closeBtn {
+  background: #ff4444;
+  color: #fff;
 }
 .cm-closeBtn:hover { opacity: 0.92; }
 .cm-closeBtn:active { transform: translateY(1px); }

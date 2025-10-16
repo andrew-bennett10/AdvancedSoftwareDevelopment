@@ -1,5 +1,6 @@
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres_test';
 
+// Exercises the card search endpoint end-to-end with a simple seeded card.
 const request = require('supertest');
 const { Client } = require('pg');
 const app = require('../server');

@@ -49,6 +49,7 @@ function normalizeCatalogItem(row) {
 export default function AddToBinderPage() {
   const navigate = useNavigate();
   const { binderId: binderParam } = useParams();
+  // Binder id pulled from the route, ensure it's a valid positive number.
   const binderId = useMemo(() => {
     const parsed = Number(binderParam);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -72,6 +73,7 @@ export default function AddToBinderPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Combine base binder quantities with staged additions for display.
   const combinedQuantities = useMemo(() => {
     const map = { ...baseQuantities };
     Object.entries(staged).forEach(([cardId, entry]) => {
@@ -80,7 +82,7 @@ export default function AddToBinderPage() {
     return map;
   }, [baseQuantities, staged]);
 
-  // Resolve account id from storage
+  // Resolve logged-in account id from storage so we can guard API calls.
   useEffect(() => {
     const stored = Number(localStorage.getItem("accountId"));
     if (Number.isFinite(stored) && stored > 0) {
@@ -108,7 +110,7 @@ export default function AddToBinderPage() {
     setAccountError("Please log in again to add cards.");
   }, []);
 
-  // Load current binder quantities once so we can stage against them
+  // Load current binder quantities once so staged changes reflect actual totals.
   useEffect(() => {
     if (!binderId || !accountId) return;
     getBinderCards(binderId)
@@ -164,6 +166,7 @@ export default function AddToBinderPage() {
     [staged]
   );
 
+  // Increment staged quantity for a catalog card.
   const handleStageIncrement = (card) => {
     if (!card) return;
     setStaged((prev) => {
@@ -172,6 +175,7 @@ export default function AddToBinderPage() {
     });
   };
 
+  // Decrement staged quantity, removing entry when it drops to zero.
   const handleStageDecrement = (cardId) => {
     setStaged((prev) => {
       const current = prev[cardId];
@@ -186,7 +190,7 @@ export default function AddToBinderPage() {
     });
   };
 
-  // Persist staged quantities sequentially so failures surface clearly
+  // Persist staged quantities sequentially so failures surface clearly.
   const handleSave = async () => {
     if (stagedEntries.length === 0 || saving) return;
     if (!accountId) {
@@ -220,6 +224,7 @@ export default function AddToBinderPage() {
     }
   };
 
+  // Clear staged list without touching existing binder data.
   const handleClear = () => {
     if (saving) return;
     setStaged({});

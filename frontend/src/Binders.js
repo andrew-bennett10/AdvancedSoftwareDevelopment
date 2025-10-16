@@ -84,7 +84,7 @@ function Binders() {
                           >View
                           </button>
                           <button
-                            className="btn btn-sm btn-dark px-3"
+                            className="btn btn-sm btn-primary px-3"
                             onClick={() => navigate(`/binder/${b.id}/add`)}
                           >Add Cards
                           </button>

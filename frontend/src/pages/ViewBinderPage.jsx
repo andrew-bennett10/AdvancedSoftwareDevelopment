@@ -11,6 +11,7 @@ import CardModal from "../components/CardModal";
 import {
   getBinderCards,
   getBinderCard,
+  deleteCard,
 } from "../lib/api/binders";
 import "./BinderPage.css";
 
@@ -36,6 +37,7 @@ function normalizeCard(row) {
 export default function ViewBinderPage() {
   const navigate = useNavigate();
   const { binderId: binderParam } = useParams();
+  // Derive the binder id from the route, guard against invalid values.
   const binderId = useMemo(() => {
     const parsed = Number(binderParam);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -49,13 +51,14 @@ export default function ViewBinderPage() {
   const [binderCards, setBinderCards] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [selectedCard, setSelectedCard] = useState(null);
+  const [removingCardId, setRemovingCardId] = useState(null);
 
   const apiOrigin = useMemo(() => {
     const base = process.env.REACT_APP_API_BASE || "http://localhost:12343/api";
     return base.replace(/\/api\/?$/, "");
   }, []);
 
-  // Resolve account id once per mount
+  // Resolve account id once per mount to decide whether we can display binder data.
   useEffect(() => {
     const stored = Number(localStorage.getItem("accountId"));
     if (Number.isFinite(stored) && stored > 0) {
@@ -108,6 +111,7 @@ export default function ViewBinderPage() {
     };
   }, [apiOrigin, binderId]);
 
+  // Fetch binder contents on load and when binder id changes.
   const refreshBinderCards = useCallback(async () => {
     if (!binderId) return;
     setCardsLoading(true);
@@ -140,6 +144,7 @@ export default function ViewBinderPage() {
     }
   }, [refreshBinderCards]);
 
+  // Lookup full card details for the modal when a tile is clicked.
   const handleViewCard = async (cardId) => {
     try {
       const row = await getBinderCard(binderId, cardId);
@@ -151,6 +156,28 @@ export default function ViewBinderPage() {
       console.error("Card detail load failed", err);
     }
   };
+
+  const handleRemoveCard = useCallback(async (card) => {
+    if (!binderId || !card) return;
+    const cardId = card.card_id || card.id;
+    if (!cardId) return;
+
+    try {
+      setRemovingCardId(cardId);
+      await deleteCard(binderId, cardId);
+      await refreshBinderCards();
+      setSelectedCard(null);
+      setCardsError(null);
+    } catch (err) {
+      console.error("Failed to remove card from binder", err);
+      setCardsError(err.message || "Failed to remove card from binder.");
+    } finally {
+      setRemovingCardId(null);
+    }
+  }, [binderId, refreshBinderCards]);
+
+  const selectedCardId = selectedCard?.card_id || selectedCard?.id;
+  const removingCurrentCard = Boolean(selectedCardId) && removingCardId === selectedCardId;
 
   if (!binderId) {
     return (
@@ -170,13 +197,17 @@ export default function ViewBinderPage() {
       <div className="binder-layout binder-layout--single">
         <main className="binder-main">
           <div className="binder-header">
-            <button className="btn btn-link" onClick={() => navigate('/binders')}>&larr; Back</button>
-            <div>
-              <h1 className="binder-title">{binderInfo?.title || 'Binder'}</h1>
-              {binderInfo?.format && <div className="binder-format">Format: {binderInfo.format}</div>}
+            <div className="binder-header-left">
+              <button className="btn btn-link" onClick={() => navigate('/binders')}>&larr; Back</button>
+              <div>
+                <h1 className="binder-title">{binderInfo?.title || 'Binder'}</h1>
+                {binderInfo?.format && <div className="binder-format">Format: {binderInfo.format}</div>}
+              </div>
             </div>
-            {binderInfoLoading && <span className="binder-meta-loading">Loading info…</span>}
-            <button className="btn btn-blue" onClick={() => navigate(`/binder/${binderId}/add`)}>Edit Binder</button>
+            <div className="binder-header-right">
+              {binderInfoLoading && <span className="binder-meta-loading">Loading info…</span>}
+              <button className="btn btn-blue" onClick={() => navigate(`/binder/${binderId}/add`)}>Edit Binder</button>
+            </div>
           </div>
 
           <section className="binder-section">
@@ -205,6 +236,9 @@ export default function ViewBinderPage() {
         <CardModal
           card={{ ...selectedCard, imageUrl: selectedCard.imageUrl || selectedCard.image_url }}
           onClose={() => setSelectedCard(null)}
+          onRemove={handleRemoveCard}
+          removeDisabled={removingCurrentCard}
+          removeLabel={removingCurrentCard ? "Removing…" : "Remove from Binder"}
         />
       )}
     </div>

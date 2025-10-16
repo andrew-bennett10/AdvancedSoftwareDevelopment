@@ -1,5 +1,6 @@
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres_test';
 
+// Validates binder card CRUD by adding the same card twice and checking qty=2.
 const request = require('supertest');
 const { Client } = require('pg');
 const db = require('../db');

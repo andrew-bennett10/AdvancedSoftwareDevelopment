@@ -34,12 +34,4 @@ Andrew Bennett
 
 To delete the database container, run `docker stop postgres && docker rm postgres`.
 
-### Cards catalog seed
-After the database is running, populate the mock cards catalog once with:
 
-```
-psql "$DATABASE_URL" -f backend/DB/migrations/001_create_cards.sql
-psql "$DATABASE_URL" -f backend/DB/seeds/seed_cards.sql
-```
-
-Re-running the seed is safe; it performs UPSERTs on each card id.

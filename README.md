@@ -1,6 +1,6 @@
 # Advanced Software Development – Trading Card Companion
 
-Repository: https://github.com/rjschweitz/AdvancedSoftwareDevelopment
+Repository: https://github.com/andrew-bennett10/AdvancedSoftwareDevelopment
 
 ## Project at a Glance
 - **Backend (`/backend`)** – Express API with PostgreSQL integration. Handles account management, favourites CRUD, and database bootstrap scripts.
@@ -63,9 +63,9 @@ _Update the table as needed before the presentation to reflect final contributio
 |----------------------|-------------|
 | Reuben Schweitzer    | Pokédex favourites experience, Pokémon TCG search, FavouriteButton component, automated testing pipeline updates |
 | Matthis Fontaine     | Initial project scaffolding, early backend routes, deployment setup |
-| Andrew Bennett       | Account management flows, account unit tests, navigation scaffolding |
-| LithiumMage          | (Update with contributions) |
-| Mattvilliage         | (Update with contributions) |
+| Andrew Bennett       | Account management flows, account unit tests, navigation scaffolding, initial database implementation, achievements |
+| Enzo                 | (Update with contributions) |
+| Gordon               | (Update with contributions) |
 
 ## Demo Tips
 - Run the Azure pipeline or show its latest successful execution to satisfy the “Automated Testing Demo” rubric item.

@@ -61,13 +61,15 @@ function CreateBinder() {
 
     // create binder via backend endpoint (same approach as accounts)
     try {
-      const response = await fetch(`${API_BASE}/create-binder`, {
+      const response = await fetch(`${API_BASE}/binders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          account_id: userId,
+          title: formData.name,
+          format: 'Standard',
           name: formData.name,
-          typeOfCard: formData.typeOfCard,
-          userId: userId
+          type_of_card: formData.typeOfCard
         })
       });
 
@@ -141,6 +143,7 @@ function CreateBinder() {
                     className="form-control" 
                     id="typeOfCard" 
                     placeholder="Enter card type (eg pokemon, item, energy etc)" 
+                    required
                     value={formData.typeOfCard}
                     onChange={handleChange}
                   />

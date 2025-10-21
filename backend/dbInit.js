@@ -26,16 +26,16 @@ async function initDB() {
   `);
   console.log("Favourites table created");
 
- // Binders (each binder belongs to an account)
+  // Binders (each binder belongs to an account)
   await db.query(`
     CREATE TABLE IF NOT EXISTS binders (
       id SERIAL PRIMARY KEY,
       account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
       title VARCHAR(100) NOT NULL DEFAULT 'My Binder',
-      format VARCHAR(50) DEFAULT 'Standard',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      format VARCHAR(50) NOT NULL DEFAULT 'Standard',
       name VARCHAR(50) UNIQUE NOT NULL,
-      type_of_card VARCHAR(255) NOT NULL
+      type_of_card VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
   console.log("Binders table created");

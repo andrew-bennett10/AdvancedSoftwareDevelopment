@@ -2,8 +2,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
-
 function SignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -33,7 +31,7 @@ function SignUp() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/signup`, {
+      const res = await fetch('http://localhost:3001/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

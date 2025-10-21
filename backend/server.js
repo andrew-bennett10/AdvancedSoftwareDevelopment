@@ -5,17 +5,13 @@ const binderRoutes = require('./routes/binders');
 const cardRoutes = require('./routes/cards');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use('/api/binders', binderRoutes);
 app.use('/api/cards', cardRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
-});
-
-app.get('/health', (_req, res) => {
-  res.send({ ok: true });
 });
 
 // Sign Up endpoint
@@ -26,7 +22,7 @@ app.post('/signup', async (req, res) => {
       'INSERT INTO accounts (username, email, password) VALUES ($1, $2, $3) RETURNING *',
       [username, email, password]
     );
-    res.status(201).send({ message: 'User created successfully', user: result.rows[0] });
+    res.status(201).json({ message: 'Signup successful', user: result.rows[0] });
   } catch (err) {
     console.error(err);
     res.status(400).send({ error: 'Signup failed' });
@@ -225,28 +221,66 @@ app.delete('/api/favourites/:id', async (req, res) => {
 });
 
 // Binders endpoints
-app.post('/create-binder', async (req, res) => {
-  const { name, typeOfCard, userId } = req.body || {};
-  if (!name || !typeOfCard) {
-    return res.status(400).send({ error: 'Binder name and type are required' });
+app.post('/binders', async (req, res) => {
+  const {
+    account_id,
+    accountId,
+    userId,
+    title,
+    format,
+    name,
+    type_of_card,
+    typeOfCard,
+  } = req.body || {};
+
+  const resolvedAccountId = Number(account_id ?? accountId ?? userId);
+
+  if (!Number.isInteger(resolvedAccountId) || resolvedAccountId <= 0) {
+    console.error('Create binder error: missing account_id');
+    return res.status(400).json({ error: 'Missing account_id' });
   }
+
+  const trimmedName = typeof name === 'string' ? name.trim() : '';
+  const binderName = trimmedName || (typeof title === 'string' ? title.trim() : '');
+  const typeOfCardValue = typeof type_of_card === 'string' && type_of_card.trim()
+    ? type_of_card.trim()
+    : (typeof typeOfCard === 'string' ? typeOfCard.trim() : '');
+
+  if (!binderName || !typeOfCardValue) {
+    return res.status(400).json({ error: 'Binder name and type are required' });
+  }
+
+  const binderTitle = typeof title === 'string' && title.trim() ? title.trim() : binderName;
+  const binderFormat = typeof format === 'string' && format.trim() ? format.trim() : 'Standard';
+
   try {
     const { rows } = await db.query(
-      'INSERT INTO binders (name, type_of_card) VALUES ($1, $2) RETURNING *',
-      [name, typeOfCard]
+      `INSERT INTO binders (account_id, title, format, name, type_of_card)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, account_id, title, format, name, type_of_card, created_at`,
+      [resolvedAccountId, binderTitle, binderFormat, binderName, typeOfCardValue]
     );
-    const binder = { ...rows[0], typeOfCard: rows[0].type_of_card };
+    const binderRow = rows[0];
+    const binder = {
+      id: binderRow.id,
+      account_id: binderRow.account_id,
+      title: binderRow.title,
+      format: binderRow.format,
+      name: binderRow.name,
+      typeOfCard: binderRow.type_of_card,
+      created_at: binderRow.created_at,
+    };
 
     // Check and award achievement for first binder (if userId is provided)
     let newAchievement = null;
-    if (userId) {
+    if (resolvedAccountId) {
       try {
         const achievementResult = await db.query(
           `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
            VALUES ($1, $2, $3, $4)
            ON CONFLICT (user_id, achievement_type) DO NOTHING
            RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
-          [userId, 'FIRST_BINDER', 'Binder Creator', 'Create your first binder']
+          [resolvedAccountId, 'FIRST_BINDER', 'Binder Creator', 'Create your first binder']
         );
         if (achievementResult.rows.length > 0) {
           newAchievement = achievementResult.rows[0];
@@ -257,10 +291,10 @@ app.post('/create-binder', async (req, res) => {
       }
     }
 
-    res.status(201).send({ message: 'Binder created', binder, achievement: newAchievement });
+    res.status(201).json({ message: 'Binder created', binder, achievement: newAchievement });
   } catch (err) {
     console.error('Error creating binder:', err);
-    res.status(400).send({ error: 'Failed to create binder' });
+    res.status(400).json({ error: 'Failed to create binder' });
   }
 });
 
@@ -370,13 +404,5 @@ app.post('/api/achievements', async (req, res) => {
     res.status(500).send({ error: 'Failed to create achievement' });
   }
 });
-
-const PORT = process.env.PORT || 12343;
-
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
-  });
-}
 
 module.exports = app;

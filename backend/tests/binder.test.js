@@ -22,10 +22,10 @@ beforeAll(async () => {
   accountId = accountRes.rows[0].id;
 
   const binderRes = await db.query(
-    `INSERT INTO binders (account_id, title, format)
-     VALUES ($1, $2, $3)
+    `INSERT INTO binders (account_id, title, format, name, type_of_card)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id`,
-    [accountId, 'Test Binder', 'Standard']
+    [accountId, 'Test Binder', 'Standard', `Test Binder ${Date.now()}`, 'Pokemon']
   );
   binderId = binderRes.rows[0].id;
 

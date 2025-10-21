@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavigationBar from './NavigationBar';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -47,16 +47,7 @@ function Achievements() {
   const user = safeParseUser();
   const userId = user?.id;
 
-  useEffect(() => {
-    if (!userId) {
-      navigate('/');
-      return;
-    }
-
-    fetchAchievements();
-  }, [userId, navigate]);
-
-  const fetchAchievements = async () => {
+  const fetchAchievements = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${BACKEND_BASE}/api/achievements?userId=${userId}`);
@@ -72,7 +63,16 @@ function Achievements() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      navigate('/');
+      return;
+    }
+
+    fetchAchievements();
+  }, [userId, navigate, fetchAchievements]);
 
   const unlockedTypes = new Set(achievements.map(a => a.achievement_type));
   const allAchievements = Object.entries(ACHIEVEMENT_DEFINITIONS).map(([type, def]) => ({

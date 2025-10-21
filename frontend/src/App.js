@@ -7,6 +7,7 @@ import Account from './Account';
 import Binders from './Binders';
 import Favourites from './Favourites';
 import Achievements from './Achievements';
+import AchievementNotification from './AchievementNotification';
 import CreateBinder from './createBinder';
 import EditBinder from './editBinder';
 import ViewBinder from './viewBinder';

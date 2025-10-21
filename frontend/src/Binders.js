@@ -38,14 +38,15 @@ function Binders() {
 
     const fetchBinders = async () => {
       try {
-        const base = process.env.REACT_APP_API_BASE || 'http://localhost:12343/api';
-        const origin = base.replace(/\/api\/?$/, '');
-        const res = await fetch(`${origin}/binders`);
-        if (!res.ok) {
-          setError('Failed to fetch binders.');
+        const origin = API_BASE.replace(/\/api\/?$/, '');
+        const response = await fetch(`${origin}/binders`);
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          const message = errorPayload?.error || 'Failed to fetch binders.';
+          setError(message);
           return;
         }
-        const data = await res.json();
+        const data = await response.json();
         setBinders(data.binders || []);
         setError(null);
       } catch (err) {

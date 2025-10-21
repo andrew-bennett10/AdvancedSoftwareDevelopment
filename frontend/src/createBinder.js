@@ -40,58 +40,28 @@ function CreateBinder() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const resolveAccountId = () => {
-    const storedAccountId = Number(localStorage.getItem('accountId'));
-    if (Number.isFinite(storedAccountId) && storedAccountId > 0) {
-      return storedAccountId;
-    }
-
-    if (user && user.id) {
-      const parsed = Number(user.id);
-      if (Number.isFinite(parsed) && parsed > 0) {
-        localStorage.setItem('accountId', String(parsed));
-        return parsed;
-      }
-    }
-
-    const storedUser = localStorage.getItem('userData');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && parsedUser.id) {
-          const id = Number(parsedUser.id);
-          if (Number.isFinite(id) && id > 0) {
-            localStorage.setItem('accountId', String(id));
-            setUser(parsedUser);
-            return id;
-          }
-        }
-      } catch (err) {
-        console.error('Failed to parse stored userData:', err);
-      }
-    }
-
-    return NaN;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
 
     // Get user data for achievement tracking
-    const userData = localStorage.getItem('userData');
-    let userId = null;
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        userId = parsedUser.id;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
+    let userId = user?.id ?? null;
+    if (!userId) {
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        try {
+          const parsedUser = JSON.parse(storedUserData);
+          userId = parsedUser?.id ?? null;
+        } catch (parseError) {
+          console.error('Error parsing user data:', parseError);
+        }
       }
     }
 
     // create binder via backend endpoint (same approach as accounts)
     try {
-      const res = await fetch(`${API_BASE}/create-binder`, {
+      const response = await fetch(`${API_BASE}/create-binder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,53 +71,43 @@ function CreateBinder() {
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        console.log('Created binder:', data.binder);
-        
-        // Check if an achievement was unlocked
-        const achievement = data?.achievement;
-        if (achievement) {
-          window.dispatchEvent(
-            new CustomEvent('achievement:unlocked', {
-              detail: { 
-                achievement: {
-                  ...achievement,
-                  icon: '📚',
-                }
-              },
-            })
-          );
-        }
-        
-        alert('A wild Binder has appeared!');
-        // go back to Binders page
-        navigate('/binders');
-      } else {
-        const errData = await res.json();
-        alert(errData.error || 'The wild binder has fled...');
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create binder');
+        const errorMessage = data?.error || 'The wild binder has fled...';
+        throw new Error(errorMessage);
       }
 
-      console.log('Created binder:', data);
-      alert('Binder created successfully!');
+      console.log('Created binder:', data.binder);
+
+      // Check if an achievement was unlocked
+      const achievement = data?.achievement;
+      if (achievement) {
+        window.dispatchEvent(
+          new CustomEvent('achievement:unlocked', {
+            detail: {
+              achievement: {
+                ...achievement,
+                icon: '📚',
+              }
+            },
+          })
+        );
+      }
+
+      alert('A wild Binder has appeared!');
       setFormData({ name: '', typeOfCard: '' });
+      // Go back to Binders page
       navigate('/binders');
     } catch (err) {
       console.error('Create binder error:', err);
       setError(err.message || 'Failed to create binder');
+      if (err?.message) {
+        alert(err.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
-    
-    // Clear form
-    setFormData({
-      name: '',
-      typeOfCard: ''
-    });
   };
 
   return (

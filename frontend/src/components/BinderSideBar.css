@@ -1,0 +1,89 @@
+.deck-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed #22304722;
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Sidebar list line keeps name left, controls right */
+.deck-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed #22304722;
+}
+
+/* Inline, tight spacing */
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;             
+}
+
+/* XS variants for sidebar controls */
+.circle-btn.xs {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  line-height: 0;
+  box-shadow: none;     
+}
+
+.qty-pill.xs {
+  font-size: 13px;
+  padding: 2px 8px;
+  min-width: 22px;
+  text-align: center;
+  background: rgba(0,0,0,0.45);
+  border-radius: 999px;
+}
+
+.deck-sidebar {
+  background: #1a2130;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  height: 450px;        
+  align-self: center;    
+}
+
+/* --- Save popup --- */
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup {
+  background: #1a2130;
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+  animation: popup-fade 250ms ease-out;
+}
+
+@keyframes popup-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+.circle-btn.plus { background: #3B82F6; color: #fff; }
+.circle-btn.minus { background: #2b3346; color: #e9edf4; }

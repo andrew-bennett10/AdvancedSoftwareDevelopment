@@ -1,10 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const binderRoutes = require('./routes/binders');
+const cardRoutes = require('./routes/cards');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/binders', binderRoutes);
+app.use('/api/cards', cardRoutes);
+
+app.get('/health', (_req, res) => {
+  res.json({ ok: true });
+});
 
 app.get('/health', (_req, res) => {
   res.send({ ok: true });
@@ -363,7 +371,12 @@ app.post('/api/achievements', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 12343;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

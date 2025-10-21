@@ -1,0 +1,237 @@
+/* Backdrop */
+.cm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+
+/* Dialog container */
+.cm-dialog {
+  background: #1e1e1e;
+  color: #ffffff;
+  width: min(900px, 92vw);
+  max-height: 88vh;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  padding: 20px;
+  overflow: auto;
+}
+
+/* Left side (image) */
+.cm-left { align-self: start; }
+.cm-image {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  background: #0f0f10;
+  object-fit: cover;
+}
+
+.cm-image--placeholder {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 20px;
+  color: #9eacc2;
+  font-weight: 600;
+  min-height: 320px;
+  border-radius: 10px;
+  background: rgba(15, 15, 16, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+/* Right side (details) */
+.cm-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cm-title {
+  margin: 0 0 6px 0;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+}
+
+/* ---------- Meta row (Set / Number / Rarity) ---------- */
+.cm-meta {
+  margin: 6px 0 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.cm-metaItem {
+  background: #0f131a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.cm-metaLabel {
+  font-size: 11px;
+  color: #9eacc2;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.cm-metaValue {
+  margin-top: 4px;
+  font-weight: 600;
+  color: #e6e8ef;
+  word-break: break-word;
+}
+
+.cm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+/* six-up variant */
+.cm-stats.cm-stats--six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.cm-statCard {
+  background: #0f131a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 50px;
+  max-width: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.cm-statLabel {
+  font-size: 11px;
+  color: #9eacc2;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.cm-statValue {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e6e8ef;
+}
+
+/* Badges (used inside stats for type/weakness/retreat/attack cost) */
+.cm-badges {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cm-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e6e8ef;
+  line-height: 1;
+}
+.cm-badgeMuted { opacity: 0.6; }
+
+/* ---------- Attack card ---------- */
+.cm-attackCard {
+  margin-top: 14px;
+  background: #0f131a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+}
+.cm-attackHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.cm-attackTitle {
+  font-weight: 700;
+  font-size: 16px;
+}
+.cm-attackDamage {
+  font-weight: 800;
+  font-size: 18px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.cm-attackText {
+  margin: 8px 0 0;
+  color: #cbd1dd;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Action buttons */
+.cm-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cm-removeBtn,
+.cm-closeBtn {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.06s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cm-removeBtn {
+  background: #ff5555;
+  color: #fff;
+}
+.cm-removeBtn:hover { opacity: 0.92; }
+.cm-removeBtn:active { transform: translateY(1px); }
+.cm-removeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Close button */
+.cm-closeBtn {
+  background: #ff4444;
+  color: #fff;
+}
+.cm-closeBtn:hover { opacity: 0.92; }
+.cm-closeBtn:active { transform: translateY(1px); }
+
+/* Scroll styling */
+.cm-dialog::-webkit-scrollbar { width: 10px; height: 10px; }
+.cm-dialog::-webkit-scrollbar-track { background: #151515; border-radius: 10px; }
+.cm-dialog::-webkit-scrollbar-thumb { background: #2b2b2b; border-radius: 10px; }
+.cm-dialog::-webkit-scrollbar-thumb:hover { background: #373737; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .cm-dialog {
+    grid-template-columns: 1fr;
+    width: min(680px, 94vw);
+    gap: 16px;
+  }
+  .cm-title { font-size: 24px; }
+  .cm-meta { grid-template-columns: 1fr; }
+  .cm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cm-stats.cm-stats--six { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .cm-dialog { padding: 16px; }
+  .cm-stats { grid-template-columns: 1fr; }
+  .cm-stats.cm-stats--six { grid-template-columns: 1fr; }
+}

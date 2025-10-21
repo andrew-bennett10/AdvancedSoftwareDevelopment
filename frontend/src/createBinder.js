@@ -7,12 +7,13 @@ const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
 function CreateBinder() {
   const navigate = useNavigate();
-  // eslint-disable-next-line
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     typeOfCard: ''
   });
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -37,6 +38,40 @@ function CreateBinder() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const resolveAccountId = () => {
+    const storedAccountId = Number(localStorage.getItem('accountId'));
+    if (Number.isFinite(storedAccountId) && storedAccountId > 0) {
+      return storedAccountId;
+    }
+
+    if (user && user.id) {
+      const parsed = Number(user.id);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        localStorage.setItem('accountId', String(parsed));
+        return parsed;
+      }
+    }
+
+    const storedUser = localStorage.getItem('userData');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && parsedUser.id) {
+          const id = Number(parsedUser.id);
+          if (Number.isFinite(id) && id > 0) {
+            localStorage.setItem('accountId', String(id));
+            setUser(parsedUser);
+            return id;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse stored userData:', err);
+      }
+    }
+
+    return NaN;
   };
 
   const handleSubmit = async (e) => {
@@ -92,9 +127,20 @@ function CreateBinder() {
         const errData = await res.json();
         alert(errData.error || 'The wild binder has fled...');
       }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create binder');
+      }
+
+      console.log('Created binder:', data);
+      alert('Binder created successfully!');
+      setFormData({ name: '', typeOfCard: '' });
+      navigate('/binders');
     } catch (err) {
-      console.error('Error:', err);
-      alert('Could not connect to server');
+      console.error('Create binder error:', err);
+      setError(err.message || 'Failed to create binder');
+    } finally {
+      setIsSubmitting(false);
     }
     
     // Clear form
@@ -135,14 +181,19 @@ function CreateBinder() {
                     className="form-control" 
                     id="typeOfCard" 
                     placeholder="Enter card type (eg pokemon, item, energy etc)" 
-                    required
                     value={formData.typeOfCard}
                     onChange={handleChange}
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100">
-                  Create Binder
+                {error && (
+                  <div className="alert alert-danger" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Binder'}
                 </button>
               </form>
             </div>

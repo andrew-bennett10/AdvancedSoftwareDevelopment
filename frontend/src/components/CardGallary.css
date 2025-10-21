@@ -1,0 +1,23 @@
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 60px; /* ⬅ increase this for more space */
+  padding: 24px;
+}
+
+
+/* keep tiles uniform */
+.card-tile {
+  height: 300px; /* adjust depending on card image aspect ratio */
+}
+.card-frame {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.card-img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+}

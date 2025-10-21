@@ -7,9 +7,9 @@ const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
 function Binders() {
   const navigate = useNavigate();
-  // eslint-disable-next-line
   const [user, setUser] = useState(null);
   const [binders, setBinders] = useState([]);
+  const [error, setError] = useState(null);
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -34,19 +34,23 @@ function Binders() {
 
   // Fetch binders from backend
   useEffect(() => {
-    if (!user) return; // wait until auth check sets the user
+    if (!user) return; // wait until auth check completes
 
     const fetchBinders = async () => {
       try {
-        const res = await fetch(`${API_BASE}/binders`);
+        const base = process.env.REACT_APP_API_BASE || 'http://localhost:12343/api';
+        const origin = base.replace(/\/api\/?$/, '');
+        const res = await fetch(`${origin}/binders`);
         if (!res.ok) {
-          console.error('Failed to fetch binders', res.status);
+          setError('Failed to fetch binders.');
           return;
         }
         const data = await res.json();
         setBinders(data.binders || []);
+        setError(null);
       } catch (err) {
         console.error('Error fetching binders:', err);
+        setError('Failed to fetch binders.');
       }
     };
 
@@ -65,20 +69,26 @@ function Binders() {
               <h2 className="text-center mb-4">Binders</h2>
                 {/* List binders from DB */}
                 <div className="mt-4">
-                  {binders.length === 0 ? (
+                  {error && <p className="text-danger">{error}</p>}
+                  {!error && binders.length === 0 ? (
                     <p>No binders found.</p>
                   ) : (
                     binders.map((b) => (
                       <div key={b.id} className="d-flex align-items-center mb-2 justify-content-between">
                         <p className="mb-0 flex-grow-1 pe-2">
-                          {b.name} - {b.typeOfCard || ''}
+                          {b.title || b.name || 'Untitled Binder'}
+                          {b.format ? ` • ${b.format}` : ''}
                         </p>
                         <div className="d-flex gap-2">
                           <button
                             className="btn btn-sm btn-primary px-3"
-                            onClick={() => navigate('/view-binder', { state: { id: b.id } })}
-                          >
-                            View
+                            onClick={() => navigate(`/binder/${b.id}`, { state: { binderId: b.id } })}
+                          >View
+                          </button>
+                          <button
+                            className="btn btn-sm btn-primary px-3"
+                            onClick={() => navigate(`/binder/${b.id}/add`)}
+                          >Add Cards
                           </button>
                           <button
                             className="btn btn-sm btn-primary px-3"
@@ -91,13 +101,12 @@ function Binders() {
                     ))
                   )}
                 </div>
-              <button
-                type="button"
-                className="btn btn-primary w-100"
-                onClick={() => navigate('/create-binder')}
-              >
-                Create Binder
-              </button>
+                <button
+                  type="button"
+                  className="btn btn-primary w-100"
+                  onClick={() => navigate('/create-binder')}
+                >Create Binder
+                </button>
             </div>
           </div>
         </div>

@@ -33,6 +33,19 @@ async function initDB() {
     )
   `);
   console.log("Binders table created");
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS achievements (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      achievement_type VARCHAR(100) NOT NULL,
+      achievement_name VARCHAR(255) NOT NULL,
+      achievement_description TEXT,
+      unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, achievement_type)
+    )
+  `);
+  console.log("Achievements table created");
 }
 
 initDB()

@@ -42,6 +42,18 @@ function CreateBinder() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Get user data for achievement tracking
+    const userData = localStorage.getItem('userData');
+    let userId = null;
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        userId = parsedUser.id;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+
     // create binder via backend endpoint (same approach as accounts)
     try {
       const res = await fetch(`${API_BASE}/create-binder`, {
@@ -49,13 +61,30 @@ function CreateBinder() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
-          typeOfCard: formData.typeOfCard
+          typeOfCard: formData.typeOfCard,
+          userId: userId
         })
       });
 
       if (res.ok) {
         const data = await res.json();
         console.log('Created binder:', data.binder);
+        
+        // Check if an achievement was unlocked
+        const achievement = data?.achievement;
+        if (achievement) {
+          window.dispatchEvent(
+            new CustomEvent('achievement:unlocked', {
+              detail: { 
+                achievement: {
+                  ...achievement,
+                  icon: '📚',
+                }
+              },
+            })
+          );
+        }
+        
         alert('A wild Binder has appeared!');
         // go back to Binders page
         navigate('/binders');
@@ -67,10 +96,6 @@ function CreateBinder() {
       console.error('Error:', err);
       alert('Could not connect to server');
     }
-    
-    // TODO: Add backend API call to create binder
-    // console.log('Creating binder:', formData);
-    // alert('Binder creation functionality - to be implemented');
     
     // Clear form
     setFormData({

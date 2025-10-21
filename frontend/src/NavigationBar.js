@@ -50,6 +50,14 @@ function NavigationBar({ activePage }) {
                 Binders
               </button>
             </li>
+            <li className="nav-item">
+              <button 
+                className={`btn btn-dark nav-link ${activePage === 'achievements' ? 'active' : ''}`}
+                onClick={() => navigate('/achievements')}
+              >
+                Achievements
+              </button>
+            </li>
           </ul>
           <ul className="navbar-nav">
             <li className="nav-item">

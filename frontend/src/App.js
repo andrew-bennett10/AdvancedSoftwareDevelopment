@@ -6,13 +6,16 @@ import Home from './Home';
 import Account from './Account';
 import Binders from './Binders';
 import Favourites from './Favourites';
+import Achievements from './Achievements';
 import CreateBinder from './createBinder';
 import EditBinder from './editBinder';
 import ViewBinder from './viewBinder';
+import AchievementNotification from './AchievementNotification';
 
 function App() {
   return (
     <Router>
+      <AchievementNotification />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
@@ -20,6 +23,7 @@ function App() {
         <Route path="/account" element={<Account />} />
         <Route path="/binders" element={<Binders />} />
         <Route path="/favourites" element={<Favourites />} />
+        <Route path="/achievements" element={<Achievements />} />
         <Route path="/create-binder" element={<CreateBinder />} />
         <Route path="/edit-binder" element={<EditBinder />} />
         <Route path="/view-binder" element={<ViewBinder />} />

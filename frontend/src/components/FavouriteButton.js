@@ -90,6 +90,20 @@ function FavouriteButton({
         );
         onAdded?.(favourite);
       }
+      // Check if an achievement was unlocked
+      const achievement = data?.achievement;
+      if (achievement) {
+        window.dispatchEvent(
+          new CustomEvent('achievement:unlocked', {
+            detail: { 
+              achievement: {
+                ...achievement,
+                icon: '⭐',
+              }
+            },
+          })
+        );
+      }
       setStatus('success');
       setTimeout(() => setStatus('idle'), 1500);
     } catch (err) {

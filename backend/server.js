@@ -167,7 +167,26 @@ app.post('/api/favourites', async (req, res) => {
       [userId, cardTitle, cardDescription, cardImageUrl]
     );
     const favourite = rows[0];
-    res.status(201).send({ favourite });
+
+    // Check and award achievement for first favourite
+    let newAchievement = null;
+    try {
+      const achievementResult = await db.query(
+        `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, achievement_type) DO NOTHING
+         RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
+        [userId, 'FIRST_FAVOURITE', 'First Favourite', 'Add your first card to favourites']
+      );
+      if (achievementResult.rows.length > 0) {
+        newAchievement = achievementResult.rows[0];
+      }
+    } catch (achievementErr) {
+      console.error('Error awarding achievement:', achievementErr);
+      // Don't fail the request if achievement fails
+    }
+
+    res.status(201).send({ favourite, achievement: newAchievement });
   } catch (err) {
     console.error('Error creating favourite:', err);
     res.status(500).send({ error: 'Failed to create favourite' });
@@ -199,7 +218,7 @@ app.delete('/api/favourites/:id', async (req, res) => {
 
 // Binders endpoints
 app.post('/create-binder', async (req, res) => {
-  const { name, typeOfCard } = req.body || {};
+  const { name, typeOfCard, userId } = req.body || {};
   if (!name || !typeOfCard) {
     return res.status(400).send({ error: 'Binder name and type are required' });
   }
@@ -209,7 +228,28 @@ app.post('/create-binder', async (req, res) => {
       [name, typeOfCard]
     );
     const binder = { ...rows[0], typeOfCard: rows[0].type_of_card };
-    res.status(201).send({ message: 'Binder created', binder });
+
+    // Check and award achievement for first binder (if userId is provided)
+    let newAchievement = null;
+    if (userId) {
+      try {
+        const achievementResult = await db.query(
+          `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (user_id, achievement_type) DO NOTHING
+           RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
+          [userId, 'FIRST_BINDER', 'Binder Creator', 'Create your first binder']
+        );
+        if (achievementResult.rows.length > 0) {
+          newAchievement = achievementResult.rows[0];
+        }
+      } catch (achievementErr) {
+        console.error('Error awarding achievement:', achievementErr);
+        // Don't fail the request if achievement fails
+      }
+    }
+
+    res.status(201).send({ message: 'Binder created', binder, achievement: newAchievement });
   } catch (err) {
     console.error('Error creating binder:', err);
     res.status(400).send({ error: 'Failed to create binder' });
@@ -275,6 +315,51 @@ app.post('/edit-binder', async (req, res) => {
   } catch (err) {
     console.error('Error updating binder:', err);
     res.status(400).send({ error: 'Failed to update binder' });
+  }
+});
+
+// Achievements endpoints
+app.get('/api/achievements', async (req, res) => {
+  const userId = Number(req.query.userId);
+  if (!userId) {
+    return res.status(400).send({ error: 'Missing or invalid userId' });
+  }
+  try {
+    const { rows } = await db.query(
+      `SELECT id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at
+       FROM achievements
+       WHERE user_id = $1
+       ORDER BY unlocked_at DESC`,
+      [userId]
+    );
+    res.send(rows);
+  } catch (err) {
+    console.error('Error fetching achievements:', err);
+    res.status(500).send({ error: 'Failed to fetch achievements' });
+  }
+});
+
+app.post('/api/achievements', async (req, res) => {
+  const { userId, achievementType, achievementName, achievementDescription = '' } = req.body || {};
+  if (!userId || !achievementType || !achievementName) {
+    return res.status(400).send({ error: 'userId, achievementType, and achievementName are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, achievement_type) DO NOTHING
+       RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
+      [userId, achievementType, achievementName, achievementDescription]
+    );
+    if (rows.length === 0) {
+      return res.status(200).send({ message: 'Achievement already unlocked' });
+    }
+    const achievement = rows[0];
+    res.status(201).send({ achievement });
+  } catch (err) {
+    console.error('Error creating achievement:', err);
+    res.status(500).send({ error: 'Failed to create achievement' });
   }
 });
 

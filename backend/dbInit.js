@@ -15,12 +15,26 @@ async function initDB() {
 
   // Binders (each binder belongs to an account)
   await db.query(`
+    CREATE TABLE IF NOT EXISTS favourites (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      card_title TEXT NOT NULL,
+      card_description TEXT,
+      card_image_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log("Favourites table created");
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS binders (
       id SERIAL PRIMARY KEY,
       account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
       title VARCHAR(100) NOT NULL DEFAULT 'My Binder',
       format VARCHAR(50) DEFAULT 'Standard',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      name VARCHAR(50) UNIQUE NOT NULL,
+      type_of_card VARCHAR(255) NOT NULL
     )
   `);
   console.log("Binders table created");
@@ -54,6 +68,18 @@ async function initDB() {
     )
   `);
   console.log("Binder_Cards table created");
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS achievements (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      achievement_type VARCHAR(100) NOT NULL,
+      achievement_name VARCHAR(255) NOT NULL,
+      achievement_description TEXT,
+      unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, achievement_type)
+    )
+  `);
+  console.log("Achievements table created");
 }
 
 initDB()

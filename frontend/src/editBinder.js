@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavigationBar from './NavigationBar';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+
 function EditBinder() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,11 +46,14 @@ function EditBinder() {
       // fetch binder details to prefill form
       (async () => {
         try {
-          const res = await fetch(`http://localhost:12343/binders/${idFromState}`);
+          const res = await fetch(`${API_BASE}/binders/${idFromState}`);
           if (res.ok) {
             const data = await res.json();
             if (data.binder) {
-              setFormData({ name: data.binder.name || '', typeOfCard: data.binder.typeofcard || data.binder.typeOfCard || '' });
+              setFormData({
+                name: data.binder.name || '',
+                typeOfCard: data.binder.typeOfCard || data.binder.type_of_card || '',
+              });
             }
           }
         } catch (err) {
@@ -67,7 +72,7 @@ function EditBinder() {
 
     //edit a binder
     try {
-      const res = await fetch('http://localhost:12343/edit-binder', {
+      const res = await fetch(`${API_BASE}/edit-binder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavigationBar from './NavigationBar';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+
 function Binders() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -91,7 +93,8 @@ function Binders() {
                           <button
                             className="btn btn-sm btn-primary px-3"
                             onClick={() => navigate('/edit-binder', { state: { id: b.id } })}
-                          >Edit
+                          >
+                            Edit
                           </button>
                         </div>
                       </div>

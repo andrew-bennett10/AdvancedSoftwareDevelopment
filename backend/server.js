@@ -14,6 +14,10 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/health', (_req, res) => {
+  res.send({ ok: true });
+});
+
 // Sign Up endpoint
 app.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
@@ -137,79 +141,233 @@ app.delete('/delete-account', async (req, res) => {
   }
 });
 
-// Add create-binder endpoint
-app.post('/create-binder', async (req, res) => {
+// Favourites endpoints
+app.get('/api/favourites', async (req, res) => {
+  const userId = Number(req.query.userId);
+  if (!userId) {
+    return res.status(400).send({ error: 'Missing or invalid userId' });
+  }
   try {
-    console.log('POST /create-binder body:', req.body);
-    const { accountId, name, title: titleFromBody, format } = req.body;
+    const { rows } = await db.query(
+      `SELECT id, user_id, card_title, card_description, card_image_url, created_at
+       FROM favourites
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+    res.send(rows);
+  } catch (err) {
+    console.error('Error fetching favourites:', err);
+    res.status(500).send({ error: 'Failed to fetch favourites' });
+  }
+});
 
-    const title = (titleFromBody ?? name ?? '').trim();
-    if (!accountId || !title) {
-      return res.status(400).json({ error: 'accountId and title are required' });
+app.post('/api/favourites', async (req, res) => {
+  const { userId, cardTitle, cardDescription = '', cardImageUrl = '' } = req.body || {};
+  if (!userId || !cardTitle) {
+    return res.status(400).send({ error: 'userId and cardTitle are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO favourites (user_id, card_title, card_description, card_image_url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, user_id, card_title, card_description, card_image_url, created_at`,
+      [userId, cardTitle, cardDescription, cardImageUrl]
+    );
+    const favourite = rows[0];
+
+    // Check and award achievement for first favourite
+    let newAchievement = null;
+    try {
+      const achievementResult = await db.query(
+        `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, achievement_type) DO NOTHING
+         RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
+        [userId, 'FIRST_FAVOURITE', 'First Favourite', 'Add your first card to favourites']
+      );
+      if (achievementResult.rows.length > 0) {
+        newAchievement = achievementResult.rows[0];
+      }
+    } catch (achievementErr) {
+      console.error('Error awarding achievement:', achievementErr);
+      // Don't fail the request if achievement fails
     }
 
-    const { rows } = await db.query(
-      `INSERT INTO binders (account_id, title, format)
-       VALUES ($1,$2,COALESCE($3, 'Standard'))
-       RETURNING id, account_id, title, format, created_at`,
-      [accountId, title, format]
-    );
+    res.status(201).send({ favourite, achievement: newAchievement });
+  } catch (err) {
+    console.error('Error creating favourite:', err);
+    res.status(500).send({ error: 'Failed to create favourite' });
+  }
+});
 
-    return res.status(201).json(rows[0]);
+app.delete('/api/favourites/:id', async (req, res) => {
+  const favId = Number(req.params.id);
+  const userId = Number(req.query.userId || req.body?.userId);
+  if (!favId || !userId) {
+    return res.status(400).send({ error: 'favourite id and userId are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      `DELETE FROM favourites
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [favId, userId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).send({ error: 'Favourite not found' });
+    }
+    res.send({ ok: true });
+  } catch (err) {
+    console.error('Error deleting favourite:', err);
+    res.status(500).send({ error: 'Failed to delete favourite' });
+  }
+});
+
+// Binders endpoints
+app.post('/create-binder', async (req, res) => {
+  const { name, typeOfCard, userId } = req.body || {};
+  if (!name || !typeOfCard) {
+    return res.status(400).send({ error: 'Binder name and type are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      'INSERT INTO binders (name, type_of_card) VALUES ($1, $2) RETURNING *',
+      [name, typeOfCard]
+    );
+    const binder = { ...rows[0], typeOfCard: rows[0].type_of_card };
+
+    // Check and award achievement for first binder (if userId is provided)
+    let newAchievement = null;
+    if (userId) {
+      try {
+        const achievementResult = await db.query(
+          `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (user_id, achievement_type) DO NOTHING
+           RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
+          [userId, 'FIRST_BINDER', 'Binder Creator', 'Create your first binder']
+        );
+        if (achievementResult.rows.length > 0) {
+          newAchievement = achievementResult.rows[0];
+        }
+      } catch (achievementErr) {
+        console.error('Error awarding achievement:', achievementErr);
+        // Don't fail the request if achievement fails
+      }
+    }
+
+    res.status(201).send({ message: 'Binder created', binder, achievement: newAchievement });
   } catch (err) {
     console.error('Error creating binder:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    res.status(400).send({ error: 'Failed to create binder' });
   }
 });
 
-// Add GET /binders endpoint so I can actually get the binders from the DB
-app.get('/binders', async (req, res) => {
+app.get('/binders', async (_req, res) => {
   try {
-    const result = await db.query('SELECT * FROM binders ORDER BY id');
-    // console.log('GET /binders -> rows:', result.rows.length); // we do a little bit of debugging
-    res.send({ binders: result.rows });
+    const { rows } = await db.query('SELECT id, name, type_of_card FROM binders ORDER BY id');
+    const binders = rows.map(({ id, name, type_of_card }) => ({
+      id,
+      name,
+      typeOfCard: type_of_card,
+    }));
+    res.send({ binders });
   } catch (err) {
     console.error('Error fetching binders:', err);
-    res.status(500).send({ error: 'Failed to access PC' });
+    res.status(500).send({ error: 'Failed to fetch binders' });
   }
 });
 
-// Add GET /binders/:id to get a single binder for editing
 app.get('/binders/:id', async (req, res) => {
-  const id = req.params.id;
+  const id = Number(req.params.id);
+  if (!id) {
+    return res.status(400).send({ error: 'Invalid binder id' });
+  }
   try {
-    const result = await db.query('SELECT * FROM binders WHERE id = $1', [id]);
-    if (result.rows.length > 0) {
-      res.send({ binder: result.rows[0] });
-    } else {
-      res.status(404).send({ error: 'Binder not found' });
+    const { rows } = await db.query('SELECT id, name, type_of_card FROM binders WHERE id = $1', [id]);
+    if (rows.length === 0) {
+      return res.status(404).send({ error: 'Binder not found' });
     }
+    const binder = {
+      id: rows[0].id,
+      name: rows[0].name,
+      typeOfCard: rows[0].type_of_card,
+    };
+    res.send({ binder });
   } catch (err) {
     console.error('Error fetching binder by id:', err);
-    res.status(500).send({ error: 'Failed to access PC' });
+    res.status(500).send({ error: 'Failed to fetch binder' });
   }
 });
 
-// Edit binder endpoint 
 app.post('/edit-binder', async (req, res) => {
-  const { id, name, typeOfCard } = req.body;
+  const { id, name, typeOfCard } = req.body || {};
   if (!id) {
     return res.status(400).send({ error: 'Missing binder id' });
   }
   try {
-    const result = await db.query(
-      'UPDATE binders SET name = $1, typeOfCard = $2 WHERE id = $3 RETURNING *',
+    const { rows } = await db.query(
+      'UPDATE binders SET name = $1, type_of_card = $2 WHERE id = $3 RETURNING id, name, type_of_card',
       [name, typeOfCard, id]
     );
-    if (result.rows.length > 0) {
-      console.log('Your binder has evolved!:', result.rows[0]);
-      res.send({ message: 'Binder updated', binder: result.rows[0] });
-    } else {
-      res.status(404).send({ error: 'Binder not found' });
+    if (rows.length === 0) {
+      return res.status(404).send({ error: 'Binder not found' });
     }
+    const binder = {
+      id: rows[0].id,
+      name: rows[0].name,
+      typeOfCard: rows[0].type_of_card,
+    };
+    res.send({ message: 'Binder updated', binder });
   } catch (err) {
     console.error('Error updating binder:', err);
-    res.status(400).send({ error: 'You stopped the evolution' });
+    res.status(400).send({ error: 'Failed to update binder' });
+  }
+});
+
+// Achievements endpoints
+app.get('/api/achievements', async (req, res) => {
+  const userId = Number(req.query.userId);
+  if (!userId) {
+    return res.status(400).send({ error: 'Missing or invalid userId' });
+  }
+  try {
+    const { rows } = await db.query(
+      `SELECT id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at
+       FROM achievements
+       WHERE user_id = $1
+       ORDER BY unlocked_at DESC`,
+      [userId]
+    );
+    res.send(rows);
+  } catch (err) {
+    console.error('Error fetching achievements:', err);
+    res.status(500).send({ error: 'Failed to fetch achievements' });
+  }
+});
+
+app.post('/api/achievements', async (req, res) => {
+  const { userId, achievementType, achievementName, achievementDescription = '' } = req.body || {};
+  if (!userId || !achievementType || !achievementName) {
+    return res.status(400).send({ error: 'userId, achievementType, and achievementName are required' });
+  }
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO achievements (user_id, achievement_type, achievement_name, achievement_description)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, achievement_type) DO NOTHING
+       RETURNING id, user_id, achievement_type, achievement_name, achievement_description, unlocked_at`,
+      [userId, achievementType, achievementName, achievementDescription]
+    );
+    if (rows.length === 0) {
+      return res.status(200).send({ message: 'Achievement already unlocked' });
+    }
+    const achievement = rows[0];
+    res.status(201).send({ achievement });
+  } catch (err) {
+    console.error('Error creating achievement:', err);
+    res.status(500).send({ error: 'Failed to create achievement' });
   }
 });
 

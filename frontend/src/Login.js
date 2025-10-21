@@ -2,10 +2,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const navigate = useNavigate();
-
 
   useEffect(() => {
     if (localStorage.getItem('userData')) {
@@ -21,7 +22,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:12343/login', {
+      const res = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -29,19 +30,19 @@ function Login() {
 
       if (res.ok) {
         const data = await res.json();
-        console.log("Logged in user:", data.user);
-        
+        console.log('Logged in user:', data.user);
+
         // Store user data for the session
         localStorage.setItem('userData', JSON.stringify(data.user));
-        
+
         navigate('/home');
       } else {
         const errData = await res.json();
         alert(errData.error || 'Login failed');
       }
     } catch (err) {
-      console.error("Error:", err);
-      alert("Could not connect to server");
+      console.error('Error:', err);
+      alert('Could not connect to server');
     }
   };
 
@@ -78,8 +79,11 @@ function Login() {
             />
           </div>
 
-          <p className="text-center">
+          <p className="text-center mb-1">
             Don’t have an account? <Link to="/signup">Sign Up</Link>
+          </p>
+          <p className="text-center">
+            <Link to="/favourites">Browse favourites</Link>
           </p>
 
           <button type="submit" className="btn btn-primary w-100">

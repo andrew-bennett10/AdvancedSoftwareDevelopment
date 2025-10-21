@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavigationBar from './NavigationBar';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+
 function CreateBinder() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -75,45 +77,55 @@ function CreateBinder() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setError('');
-
-    const accountId = resolveAccountId();
-    if (!Number.isFinite(accountId) || accountId <= 0) {
-      setError('Account information is missing. Please log in again.');
-      return;
+    // Get user data for achievement tracking
+    const userData = localStorage.getItem('userData');
+    let userId = null;
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        userId = parsedUser.id;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
     }
 
-    const title = formData.name.trim();
-    if (!title) {
-      setError('Please enter a binder title.');
-      return;
-    }
-
-    const format = formData.typeOfCard.trim();
-    const payload = { accountId, title };
-    if (format) {
-      payload.format = format;
-    }
-
-    setIsSubmitting(true);
-
+    // create binder via backend endpoint (same approach as accounts)
     try {
-      const response = await fetch('http://localhost:12343/create-binder', {
+      const res = await fetch(`${API_BASE}/create-binder`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          typeOfCard: formData.typeOfCard,
+          userId: userId
+        })
       });
 
-      const text = await response.text();
-      let data = {};
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch (parseErr) {
-          console.error('Failed to parse response JSON:', parseErr);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Created binder:', data.binder);
+        
+        // Check if an achievement was unlocked
+        const achievement = data?.achievement;
+        if (achievement) {
+          window.dispatchEvent(
+            new CustomEvent('achievement:unlocked', {
+              detail: { 
+                achievement: {
+                  ...achievement,
+                  icon: '📚',
+                }
+              },
+            })
+          );
         }
+        
+        alert('A wild Binder has appeared!');
+        // go back to Binders page
+        navigate('/binders');
+      } else {
+        const errData = await res.json();
+        alert(errData.error || 'The wild binder has fled...');
       }
 
       if (!response.ok) {
@@ -130,6 +142,12 @@ function CreateBinder() {
     } finally {
       setIsSubmitting(false);
     }
+    
+    // Clear form
+    setFormData({
+      name: '',
+      typeOfCard: ''
+    });
   };
 
   return (

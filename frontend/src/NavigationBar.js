@@ -27,6 +27,14 @@ function NavigationBar({ activePage }) {
               </button>
             </li>
             <li className="nav-item">
+              <button
+                className={`btn btn-dark nav-link ${activePage === 'favourites' ? 'active' : ''}`}
+                onClick={() => navigate('/favourites')}
+              >
+                Favourites
+              </button>
+            </li>
+            <li className="nav-item">
               <button 
                 className={`btn btn-dark nav-link ${activePage === 'account' ? 'active' : ''}`}
                 onClick={() => navigate('/account')}
@@ -40,6 +48,14 @@ function NavigationBar({ activePage }) {
                 onClick={() => navigate('/binders')}
               >
                 Binders
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`btn btn-dark nav-link ${activePage === 'achievements' ? 'active' : ''}`}
+                onClick={() => navigate('/achievements')}
+              >
+                Achievements
               </button>
             </li>
           </ul>

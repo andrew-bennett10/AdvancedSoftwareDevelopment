@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+describe('App routing shell', () => {
+  beforeEach(() => {
+    window.history.pushState({}, '', '/');
+  });
+
+  test('renders login view by default', () => {
+    render(<App />);
+    expect(screen.getByRole('heading', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByText(/don’t have an account/i)).toBeInTheDocument();
+  });
 });

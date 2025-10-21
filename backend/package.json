@@ -7,6 +7,11 @@
     "test:prep": "node tests/prepareTestDb.js",
     "test": "jest --runInBand",
     "test:ci": "npm run test:prep && jest --runInBand"
+    "start": "node index.js",
+    "server": "node server.js",
+    "db:init": "node dbInit.js",
+    "db:seed": "node seedFavourites.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",

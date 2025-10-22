@@ -7,18 +7,15 @@ import Account from './Account';
 import Binders from './Binders';
 import Favourites from './Favourites';
 import Achievements from './Achievements';
-import AchievementNotification from './AchievementNotification';
 import CreateBinder from './createBinder';
 import EditBinder from './editBinder';
 import ViewBinder from './viewBinder';
 import ViewBinderPage from './pages/ViewBinderPage';
 import AddToBinderPage from './pages/AddToBinderPage';
-import AchievementNotification from './AchievementNotification';
 
 function App() {
   return (
     <Router>
-      <AchievementNotification />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />

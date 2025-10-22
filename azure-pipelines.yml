@@ -39,7 +39,7 @@ steps:
 # Initialise database schema (runs dbInit.js)
 - script: |
     cd backend
-    npm install pg
+    npm install
     node dbInit.js
   displayName: 'Initialize database schema'
   env:

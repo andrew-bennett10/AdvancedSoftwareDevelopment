@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import NavigationBar from './NavigationBar';
+import PageLayout from './components/PageLayout';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
@@ -81,66 +80,83 @@ function Binders() {
   };
 
   return (
-    <div>
-      <NavigationBar activePage="binders" />
-
-      {/* Binder Creation Content */}
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-6">
-            <div className="card p-4 shadow">
-              <h2 className="text-center mb-4">Binders</h2>
-                {/* List binders from DB */}
-                <div className="mt-4">
-                  {error && <p className="text-danger">{error}</p>}
-                  {!error && binders.length === 0 ? (
-                    <p>No binders found.</p>
-                  ) : (
-                    binders.map((b) => (
-                      <div key={b.id} className="d-flex align-items-center mb-2 justify-content-between">
-                        <p className="mb-0 flex-grow-1 pe-2">
-                          {b.title || b.name || 'Untitled Binder'}
-                          {b.format ? ` • ${b.format}` : ''}
-                        </p>
-                        <div className="d-flex gap-2">
-                          <button
-                            className="btn btn-sm btn-primary px-3"
-                            onClick={() => navigate(`/binder/${b.id}`, { state: { binderId: b.id } })}
-                          >View
-                          </button>
-                          <button
-                            className="btn btn-sm btn-primary px-3"
-                            onClick={() => navigate(`/binder/${b.id}/add`)}
-                          >Add Cards
-                          </button>
-                          <button
-                            className="btn btn-sm btn-primary px-3"
-                            onClick={() => navigate('/edit-binder', { state: { id: b.id } })}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-sm btn-danger px-3"
-                            onClick={() => handleDeleteBinder(b.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary w-100"
-                  onClick={() => navigate('/create-binder')}
-                >Create Binder
-                </button>
-            </div>
+    <PageLayout
+      activePage="binders"
+      title="Binders"
+      description="Organise themed binders and hop back into them whenever inspiration strikes."
+      actions={
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => navigate('/create-binder')}
+        >
+          Create Binder
+        </button>
+      }
+    >
+      <section className="page-surface page-stack">
+        {error ? (
+          <div className="alert alert-danger mb-0" role="alert">
+            {error}
           </div>
-        </div>
-      </div>
-    </div>
+        ) : null}
+
+        {!error && binders.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state__icon">📁</div>
+            <p className="empty-state__title">No binders yet</p>
+            <p className="empty-state__subtitle">
+              Start your first binder to group cards by theme, deck or trading goal.
+            </p>
+          </div>
+        ) : (
+          <div className="page-stack">
+            {binders.map((b) => {
+              const title = b.title || b.name || 'Untitled Binder';
+              const meta = [b.format, b.description].filter(Boolean).join(' • ');
+
+              return (
+                <div
+                  key={b.id}
+                  className="soft-panel d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
+                >
+                  <div>
+                    <h3 className="h5 mb-1">{title}</h3>
+                    {meta ? <p className="text-muted mb-0 small">{meta}</p> : null}
+                  </div>
+                  <div className="d-flex flex-wrap gap-2">
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => navigate(`/binder/${b.id}`, { state: { binderId: b.id } })}
+                    >
+                      View
+                    </button>
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => navigate(`/binder/${b.id}/add`)}
+                    >
+                      Add Cards
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => navigate('/edit-binder', { state: { id: b.id } })}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDeleteBinder(b.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </PageLayout>
   );
 }
 

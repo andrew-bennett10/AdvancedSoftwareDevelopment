@@ -24,7 +24,7 @@ export default function CardTile({ card, qty = 0, onAdd, onRemove, onView }) {
             <span className="qty-pill">{qty}</span>
             <button className="circle-btn plus" onClick={() => onAdd(card)} aria-label="add">+</button>
           </>
-        ) : (
+        ) : qty == null ? null : (
           <span className="qty-pill readOnly">Qty: {qty}</span>
         )}
       </div>

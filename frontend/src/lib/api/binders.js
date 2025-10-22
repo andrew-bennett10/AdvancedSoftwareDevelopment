@@ -1,4 +1,8 @@
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:12343/api';
+const RAW_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+const NORMALISED_BASE = RAW_BASE.replace(/\/$/, '');
+const API_BASE = NORMALISED_BASE.endsWith('/api')
+  ? NORMALISED_BASE
+  : `${NORMALISED_BASE}/api`;
 
 function getAccountId() {
   if (typeof window === 'undefined') return '1';

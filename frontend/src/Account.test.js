@@ -51,10 +51,9 @@ describe('Account Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Account Settings')).toBeInTheDocument();
-      expect(screen.getByText('Update Account Details')).toBeInTheDocument();
-      // Use getAllByText for duplicate text
-      const changePasswordElements = screen.getAllByText('Change Password');
-      expect(changePasswordElements.length).toBeGreaterThan(0);
+      expect(screen.getByText('Profile')).toBeInTheDocument();
+      expect(screen.getByText('Security')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Change password/i })).toBeInTheDocument();
     });
   });
 
@@ -88,7 +87,7 @@ describe('Account Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Update Details')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Update details/i })).toBeInTheDocument();
     });
 
     // Verify fetch was called with correct data when form is submitted
@@ -120,7 +119,7 @@ describe('Account Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Update Details')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Update details/i })).toBeInTheDocument();
     });
 
     // Verify the form elements exist
@@ -128,5 +127,4 @@ describe('Account Component', () => {
     expect(screen.getByPlaceholderText('Enter email')).toBeInTheDocument();
   });
 });
-
 

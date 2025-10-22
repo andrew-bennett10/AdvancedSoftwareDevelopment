@@ -1,4 +1,5 @@
 const db = require('./db');
+const { seedCardsIfNeeded } = require('./seedCards');
 
 async function initDB() {
   // Accounts table
@@ -40,6 +41,80 @@ async function initDB() {
   `);
   console.log("Binders table created");
 
+  // Ensure legacy binders table has new columns/constraints
+  await db.query(`
+    ALTER TABLE binders
+    ADD COLUMN IF NOT EXISTS account_id INTEGER
+  `);
+  await db.query(`
+    ALTER TABLE binders
+    ADD COLUMN IF NOT EXISTS title VARCHAR(100) DEFAULT 'My Binder'
+  `);
+  await db.query(`
+    ALTER TABLE binders
+    ADD COLUMN IF NOT EXISTS format VARCHAR(50) DEFAULT 'Standard'
+  `);
+  await db.query(`
+    ALTER TABLE binders
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  `);
+  await db.query(`
+    WITH first_account AS (
+      SELECT id FROM accounts ORDER BY id LIMIT 1
+    )
+    UPDATE binders
+    SET
+      account_id = COALESCE(
+        account_id,
+        (SELECT id FROM first_account),
+        1
+      ),
+      title = COALESCE(NULLIF(title, ''), 'My Binder'),
+      format = COALESCE(NULLIF(format, ''), 'Standard')
+  `);
+  await db.query(`
+    ALTER TABLE binders
+    ALTER COLUMN account_id SET NOT NULL,
+    ALTER COLUMN title SET NOT NULL,
+    ALTER COLUMN format SET NOT NULL
+  `);
+  await db.query(`
+    ALTER TABLE binders
+    ALTER COLUMN title SET DEFAULT 'My Binder',
+    ALTER COLUMN format SET DEFAULT 'Standard'
+  `);
+  await db.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_name = 'binders'
+          AND constraint_type = 'FOREIGN KEY'
+          AND constraint_name = 'binders_account_id_fkey'
+      ) THEN
+        ALTER TABLE binders
+        ADD CONSTRAINT binders_account_id_fkey
+        FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE;
+      END IF;
+    END;
+    $$;
+  `);
+  await db.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_name = 'binders'
+          AND constraint_type = 'UNIQUE'
+          AND constraint_name = 'binders_name_key'
+      ) THEN
+        ALTER TABLE binders ADD CONSTRAINT binders_name_key UNIQUE (name);
+      END IF;
+    END;
+    $$;
+  `);
+  console.log("Binders table migrated");
+
 
   // Cards catalog (reference data)
   await db.query(`
@@ -57,6 +132,7 @@ async function initDB() {
     )
   `);
   console.log("Cards table created");
+  await seedCardsIfNeeded({ minCount: 120 });
 
   // Junction table (binder <-> cards with quantity)
   await db.query(`

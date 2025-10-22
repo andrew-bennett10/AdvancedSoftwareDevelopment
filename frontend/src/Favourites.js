@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import PageLayout from './components/PageLayout';
 import './Favourites.css';
+import './components/CardGallary.css';
+import CardTile from './components/CardTile';
+import { searchCards as searchLocalCards } from './lib/api/cards';
 
 const BACKEND_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
-const CARD_API_URL = 'https://api.pokemontcg.io/v2/cards';
-const RESULTS_PER_POKEMON = 6;
+const RESULTS_PER_POKEMON = 9;
 
 const makeId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -37,7 +39,6 @@ function safeParseUser() {
 }
 
 function Favourites() {
-  const navigate = useNavigate();
   const [favourites, setFavourites] = useState([]);
   const [favLoading, setFavLoading] = useState(true);
   const [favError, setFavError] = useState(null);
@@ -208,42 +209,59 @@ function Favourites() {
       return;
     }
 
-    const controller = new AbortController();
-
     async function loadCards() {
       setCardsLoading(true);
       setCardsError(null);
       try {
         const searchName = activeFavourite.name.trim();
-        const query = encodeURIComponent(`name:"${searchName}" supertype:Pokemon`);
-        const url = `${CARD_API_URL}?q=${query}&pageSize=${RESULTS_PER_POKEMON}`;
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`Card API error ${res.status}`);
-        const payload = await res.json();
-        const mapped = (payload?.data || []).map((card) => ({
+        const payload = await searchLocalCards({ q: searchName, limit: RESULTS_PER_POKEMON });
+        const mapped = (payload?.items || []).map((card) => ({
           id: card.id,
           name: card.name,
-          image: card.images?.large || card.images?.small || '',
-          setName: card.set?.name || 'Unknown Set',
-          rarity: card.rarity || 'Unknown rarity',
-          types: card.types || [],
-          subtypes: card.subtypes || [],
+          image: card.image_url || activeFavourite.imageUrl || '',
+          setName: card.set_name || activeFavourite.description || 'Favourite card',
+          rarity: card.rarity || 'Favourite',
+          types: card.type ? [card.type] : [],
+          subtypes: [],
         }));
-        setCards(mapped);
-        setFocusedCardId(mapped[0]?.id || null);
+
+        const selectedCards =
+          mapped.length > 0
+            ? mapped.slice(0, RESULTS_PER_POKEMON)
+            : [
+                {
+                  id: `favourite-${activeFavourite.id}`,
+                  name: activeFavourite.name,
+                  image: activeFavourite.imageUrl || '',
+                  setName: activeFavourite.description || 'Favourite card',
+                  rarity: 'Favourite',
+                  types: [],
+                  subtypes: [],
+                },
+              ];
+        setCards(selectedCards);
+        setFocusedCardId(selectedCards[0]?.id || null);
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          setCards([]);
-          setCardsError(err.message || 'Failed to load cards');
-          setFocusedCardId(null);
-        }
+        const fallback = [
+          {
+            id: `favourite-${activeFavourite.id}`,
+            name: activeFavourite.name,
+            image: activeFavourite.imageUrl || '',
+            setName: activeFavourite.description || 'Favourite card',
+            rarity: 'Favourite',
+            types: [],
+            subtypes: [],
+          },
+        ];
+        setCards(fallback);
+        setCardsError(null);
+        setFocusedCardId(fallback[0].id);
       } finally {
         setCardsLoading(false);
       }
     }
 
     loadCards();
-    return () => controller.abort();
   }, [activeFavouriteKey, activeFavourite]);
 
   const handleFavouriteSelect = (index) => {
@@ -312,293 +330,275 @@ function Favourites() {
     );
   };
 
-  const jumpTo = (path) => {
-    navigate(path);
+  const handleDeleteFavourite = async (favouriteId) => {
+    if (!favouriteId) return;
+    const confirmed =
+      typeof window !== 'undefined' && typeof window.confirm === 'function'
+        ? window.confirm('Remove this card from favourites?')
+        : true;
+    if (!confirmed) return;
+    try {
+      const res = await fetch(`${BACKEND_BASE}/api/favourites/${favouriteId}?userId=${userId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error || `Failed to delete favourite (${res.status})`);
+      }
+      setFavourites((prev) => prev.filter((fav) => String(fav.id) !== String(favouriteId)));
+      setFavError(null);
+    } catch (err) {
+      console.error('Failed to delete favourite', err);
+      setFavError(err.message || 'Failed to delete favourite');
+      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert(err.message || 'Failed to delete favourite');
+      }
+    }
   };
 
-  const goBack = () => navigate(-1);
-  const goForward = () => navigate(1);
-
   return (
-    <div className="favourites-page">
-      <div className="favourites-root">
-        <div className="pokedex-frame">
-          <header className="pokedex-top">
-            <div className="pokedex-left">
-              <button
-                type="button"
-                className="pokedex-lens"
-                onClick={() => jumpTo('/home')}
-                aria-label="Go to home"
-              />
-              <div className="pokedex-lights">
-                <button
-                  type="button"
-                  className="light green"
-                  onClick={goBack}
-                  aria-label="Go back"
-                />
-                <button
-                  type="button"
-                  className="light yellow"
-                  onClick={goForward}
-                  aria-label="Go forward"
-                />
-                <button
-                  type="button"
-                  className="light red"
-                  onClick={() => jumpTo('/binders')}
-                  aria-label="Open binders"
-                />
-              </div>
-            </div>
-            <nav className="pokedex-nav">
-              <button
-                type="button"
-                className="nav-chip"
-                onClick={() => jumpTo('/home')}
-              >
-                Home
-              </button>
-              <button
-                type="button"
-                className="nav-chip active"
-                onClick={() => jumpTo('/favourites')}
-                aria-current="page"
-              >
-                Favourites
-              </button>
-              <button
-                type="button"
-                className="nav-chip"
-                onClick={() => jumpTo('/account')}
-              >
-                Account
-              </button>
-              <button
-                type="button"
-                className="nav-chip"
-                onClick={() => jumpTo('/binders')}
-              >
-                Binders
-              </button>
-            </nav>
-            <div className="pokedex-camera">
-              <span />
-              <span />
-            </div>
-          </header>
+    <PageLayout
+      activePage="favourites"
+      title="Favourites"
+      description="Curate your go-to cards and organise them in custom categories."
+    >
+      <div className="page-grid favourites-layout">
+        <section className="page-surface page-stack page-stack--lg">
+          <div className="page-stack page-stack--sm">
+            <h2 className="h6 text-uppercase text-secondary mb-1">Saved cards</h2>
+            <p className="text-muted mb-0">
+              Select a favourite to explore matching prints and organise them in categories.
+            </p>
+          </div>
 
-        <div className="pokedex-body">
-          <main className="pokedex-main">
-            <div className="main-surface">
-              <div className="main-inner">
-                <div className="favourite-strip">
-                  {filteredFavourites.map((fav, index) => (
-                    <button
-                      key={fav.id}
-                      type="button"
-                      className={`favourite-chip${index === activeIndex ? ' active' : ''}`}
-                      onClick={() => handleFavouriteSelect(index)}
-                    >
-                      {fav.name || 'Unnamed card'}
-                    </button>
+          <div className="favourites-chip-list">
+            {filteredFavourites.map((fav, index) => (
+              <button
+                key={fav.id}
+                type="button"
+                className={`favourites-chip${index === activeIndex ? ' favourites-chip--active' : ''}`}
+                onClick={() => handleFavouriteSelect(index)}
+              >
+                {fav.name || 'Unnamed card'}
+              </button>
+            ))}
+            {filteredFavourites.length === 0 && !favLoading ? (
+              <span className="favourites-chip-empty">
+                {selectedCategoryId === 'all'
+                  ? 'Add a favourite to start exploring cards.'
+                  : 'No favourites assigned to this category yet.'}
+              </span>
+            ) : null}
+          </div>
+
+          {favLoading ? (
+            <div className="favourites-status">Fetching your favourites…</div>
+          ) : favError ? (
+            <div className="alert alert-danger mb-0" role="alert">
+              {favError}
+            </div>
+          ) : filteredFavourites.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state__icon">💡</div>
+              <p className="empty-state__title">No favourites here yet</p>
+              <p className="empty-state__subtitle">
+                {selectedCategoryId === 'all'
+                  ? 'Save cards from the Pokédex search to populate this space.'
+                  : 'Assign favourites to this category to see them listed here.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {cardsLoading ? (
+                <div className="favourites-status">Loading cards…</div>
+              ) : cardsError ? (
+                <div className="alert alert-warning mb-0" role="alert">
+                  {cardsError}
+                </div>
+              ) : cards.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state__icon">🧭</div>
+                  <p className="empty-state__title">No matching cards</p>
+                  <p className="empty-state__subtitle">
+                    Try updating the card name to find available prints.
+                  </p>
+                </div>
+              ) : (
+                <div className="favourites-card-grid gallery-grid">
+                  {cards.map((card) => (
+                    <CardTile
+                      key={card.id}
+                      card={{ ...card, imageUrl: card.image, image: card.image }}
+                      onView={(cardId) => handleCardSelect(cardId)}
+                      qty={null}
+                    />
                   ))}
-                  {filteredFavourites.length === 0 && !favLoading && (
-                    <span className="strip-empty">
-                      {selectedCategoryId === 'all'
-                        ? 'Add a favourite to start exploring cards.'
-                        : 'No favourites assigned to this category yet.'}
-                    </span>
-                  )}
-                  {favLoading && <span className="strip-empty">Fetching your favourites…</span>}
                 </div>
+              )}
 
-                <div className="main-display">
-                  {favError ? (
-                    <div className="main-message error">{favError}</div>
-                  ) : filteredFavourites.length === 0 ? (
-                    <div className="main-message">
-                      {selectedCategoryId === 'all'
-                        ? favLoading
-                          ? 'Fetching your favourites…'
-                          : 'Add a favourite to start exploring cards.'
-                        : 'Assign favourites to this category to see matching cards here.'}
-                    </div>
-                  ) : cardsLoading ? (
-                    <div className="main-message">Loading cards…</div>
-                  ) : cardsError ? (
-                    <div className="main-message error">{cardsError}</div>
-                  ) : cards.length === 0 ? (
-                    <div className="main-message">
-                      No cards found for this favourite yet.
-                    </div>
-                  ) : (
-                    <div className="card-grid">
-                      {cards.map((card) => (
-                        <button
-                          key={card.id}
-                          type="button"
-                          className={`card-tile${card.id === focusedCard?.id ? ' active' : ''}`}
-                          onClick={() => handleCardSelect(card.id)}
-                        >
-                          {card.image ? (
-                            <img src={card.image} alt={card.name} loading="lazy" />
-                          ) : (
-                            <span className="card-placeholder">{card.name}</span>
-                          )}
-                          <span className="card-title">{card.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <footer className="main-footer">
-              <div className="footer-label">Favourite details</div>
-              {activeFavourite ? (
-                <div className="footer-content">
+              <div className="soft-panel">
+                <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
                   <div>
-                    <h2>{activeFavourite.name}</h2>
-                    {activeFavourite.description ? (
-                      <p>{activeFavourite.description}</p>
+                    <h3 className="h5 mb-1">{activeFavourite?.name || 'Favourite details'}</h3>
+                    {activeFavourite?.description ? (
+                      <p className="text-muted mb-0">{activeFavourite.description}</p>
                     ) : (
-                      <p className="muted">No description yet. Add one from the account page.</p>
+                      <p className="text-muted mb-0">
+                        Add a description from the account page to remember why you love this card.
+                      </p>
                     )}
                   </div>
-                  <div className="footer-meta">
-                    {activeFavourite.timestamp && (
-                      <span>Saved {new Date(activeFavourite.timestamp).toLocaleDateString()}</span>
-                    )}
-                  </div>
+                  {activeFavourite?.timestamp ? (
+                    <span className="badge bg-secondary">
+                      Saved {new Date(activeFavourite.timestamp).toLocaleDateString()}
+                    </span>
+                  ) : null}
                 </div>
-              ) : (
-                <div className="footer-content">
-                  <p className="muted">No favourite selected.</p>
-                </div>
-              )}
-            </footer>
-          </main>
+                {activeFavourite ? (
+                  <div className="d-flex flex-wrap gap-2 mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDeleteFavourite(activeFavourite.id)}
+                    >
+                      Remove from favourites
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
+        </section>
 
-          <aside className="pokedex-side">
-            <div className="side-screen">
-              {focusedCard?.image ? (
-                <img src={focusedCard.image} alt={focusedCard.name} />
-              ) : (
-                <div className="side-screen-placeholder">Select a card to preview it here.</div>
-              )}
-            </div>
-
-            <div className="side-info">
-              <h3>Card summary</h3>
-              {focusedCard ? (
-                <dl>
-                  <div>
-                    <dt>Name</dt>
-                    <dd>{focusedCard.name}</dd>
+        <aside className="favourites-aside">
+          <div className="page-stack sticky-pane">
+            <section className="page-surface page-stack page-stack--sm favourites-preview">
+              <div className="favourites-preview__frame">
+                {focusedCard?.image ? (
+                  <img src={focusedCard.image} alt={focusedCard.name} />
+                ) : (
+                  <div className="favourites-preview__placeholder">
+                    Select a card to preview it here.
                   </div>
-                  <div>
-                    <dt>Set</dt>
-                    <dd>{focusedCard.setName}</dd>
-                  </div>
-                  <div>
-                    <dt>Rarity</dt>
-                    <dd>{focusedCard.rarity}</dd>
-                  </div>
-                  {focusedCard.types.length > 0 && (
+                )}
+              </div>
+              <div>
+                <h3 className="h6 text-uppercase text-secondary mb-2">Card summary</h3>
+                {focusedCard ? (
+                  <dl className="favourites-preview__details">
                     <div>
-                      <dt>Types</dt>
-                      <dd>{focusedCard.types.join(', ')}</dd>
+                      <dt>Name</dt>
+                      <dd>{focusedCard.name}</dd>
                     </div>
-                  )}
-                  {focusedCard.subtypes.length > 0 && (
                     <div>
-                      <dt>Subtypes</dt>
-                      <dd>{focusedCard.subtypes.join(', ')}</dd>
+                      <dt>Set</dt>
+                      <dd>{focusedCard.setName}</dd>
                     </div>
-                  )}
-                </dl>
-              ) : (
-                <p className="muted">Pick a card from the main screen to see its info.</p>
-              )}
-            </div>
+                    <div>
+                      <dt>Rarity</dt>
+                      <dd>{focusedCard.rarity}</dd>
+                    </div>
+                    {focusedCard.types.length > 0 ? (
+                      <div>
+                        <dt>Types</dt>
+                        <dd>{focusedCard.types.join(', ')}</dd>
+                      </div>
+                    ) : null}
+                    {focusedCard.subtypes.length > 0 ? (
+                      <div>
+                        <dt>Subtypes</dt>
+                        <dd>{focusedCard.subtypes.join(', ')}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                ) : (
+                  <p className="text-muted mb-0">Pick a card from the list to see its details.</p>
+                )}
+              </div>
+            </section>
 
-            <div className="category-panel">
-              <div className="category-header">
-                <span>Favourite categories</span>
-                <button type="button" className="category-add" onClick={handleAddCategory}>
+            <section className="page-surface page-stack page-stack--sm">
+              <div className="d-flex justify-content-between align-items-center gap-3">
+                <h3 className="h6 text-uppercase text-secondary mb-0">Categories</h3>
+                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={handleAddCategory}>
                   + Category
                 </button>
               </div>
-              <div className="category-grid">
+              <div className="favourites-category-list">
                 <button
                   type="button"
-                  className={`category-card${selectedCategoryId === 'all' ? ' active' : ''}`}
+                  className={`favourites-category${selectedCategoryId === 'all' ? ' favourites-category--active' : ''}`}
                   onClick={() => handleSelectCategory('all')}
                 >
-                  <span className="category-name">All favourites</span>
-                  <span className="category-count">{favourites.length}</span>
+                  <span>All favourites</span>
+                  <span className="favourites-category__count">{favourites.length}</span>
                 </button>
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
-                    className={`category-card${selectedCategoryId === cat.id ? ' active' : ''}`}
+                    className={`favourites-category${selectedCategoryId === cat.id ? ' favourites-category--active' : ''}`}
                     onClick={() => handleSelectCategory(cat.id)}
                   >
-                    <span className="category-name">{cat.name}</span>
-                    <span className="category-count">{cat.favouriteIds.length}</span>
+                    <span>{cat.name}</span>
+                    <span className="favourites-category__count">{cat.favouriteIds.length}</span>
                   </button>
                 ))}
               </div>
 
-              {currentCategory && (
-                <div className="category-manager">
-                  <div className="category-manager-header">
-                    <h4>{currentCategory.name}</h4>
-                    <div className="category-manager-actions">
-                      <button type="button" onClick={() => handleRenameCategory(currentCategory.id)}>
+              {currentCategory ? (
+                <div className="soft-panel favourites-category-manager">
+                  <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+                    <h4 className="h6 mb-0">{currentCategory.name}</h4>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => handleRenameCategory(currentCategory.id)}
+                      >
                         Rename
                       </button>
-                      <button type="button" onClick={() => handleDeleteCategory(currentCategory.id)}>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDeleteCategory(currentCategory.id)}
+                      >
                         Delete
                       </button>
                     </div>
                   </div>
-                  <div className="category-manager-body">
-                    <p className="muted">Assign favourites to this category:</p>
-                    {favError ? (
-                      <div className="main-message error">{favError}</div>
-                    ) : favourites.length === 0 && !favLoading ? (
-                      <div className="empty-state">No favourites yet.</div>
-                    ) : (
-                      <div className="category-assign-list">
-                        {favourites.map((fav) => {
-                          const favKey = String(fav.id);
-                          const checked = currentCategory.favouriteIds.includes(favKey);
-                          return (
-                            <label key={fav.id} className="category-assign-item">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => handleToggleFavouriteInCategory(currentCategory.id, fav.id)}
-                              />
-                              <span>{fav.name || 'Unnamed card'}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-muted small mb-3">Assign favourites to this category:</p>
+                  {favLoading ? (
+                    <div className="favourites-status">Loading favourites…</div>
+                  ) : favourites.length === 0 ? (
+                    <p className="text-muted mb-0">No favourites yet.</p>
+                  ) : (
+                    <div className="favourites-category-assignment">
+                      {favourites.map((fav) => {
+                        const favKey = String(fav.id);
+                        const checked = currentCategory.favouriteIds.includes(favKey);
+                        return (
+                          <label key={fav.id} className="favourites-category-assignment__item">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                handleToggleFavouriteInCategory(currentCategory.id, fav.id)
+                              }
+                            />
+                            <span>{fav.name || 'Unnamed card'}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </aside>
-        </div>
+              ) : null}
+            </section>
+          </div>
+        </aside>
       </div>
-    </div>
-  </div>
+    </PageLayout>
   );
 }
 

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import NavigationBar from './NavigationBar';
+import PageLayout from './components/PageLayout';
 import FavouriteButton from './components/FavouriteButton';
-
-const CARD_API_URL = 'https://api.pokemontcg.io/v2/cards';
+import { searchCards as searchLocalCards } from './lib/api/cards';
 const RESULTS_PER_PAGE = 9;
 
 function Home() {
@@ -54,24 +52,19 @@ function Home() {
     setSearching(true);
     setSearchError('');
     try {
-      const encoded = encodeURIComponent(`name:"${query}" supertype:Pokemon`);
-      const res = await fetch(`${CARD_API_URL}?q=${encoded}&pageSize=${RESULTS_PER_PAGE}`);
-      if (!res.ok) {
-        throw new Error(`Card search failed (${res.status})`);
-      }
-      const payload = await res.json();
-      const transformed = (payload?.data || []).map((card) => ({
+      const payload = await searchLocalCards({ q: query, limit: RESULTS_PER_PAGE });
+      const transformed = (payload?.items || []).map((card) => ({
         id: card.id,
         name: card.name,
-        image: card.images?.large || card.images?.small || '',
-        setName: card.set?.name || 'Unknown set',
+        image: card.image_url || '',
+        setName: card.set_name || 'Unknown set',
         rarity: card.rarity || 'Unknown rarity',
-        types: card.types || [],
+        types: card.type ? [card.type] : [],
       }));
       setCards(transformed);
     } catch (err) {
       console.error('Failed to fetch cards', err);
-      setSearchError('Could not load cards. Try a different name.');
+      setSearchError(err?.message || 'Could not load cards. Try a different name.');
       setCards([]);
     } finally {
       setSearching(false);
@@ -83,25 +76,22 @@ function Home() {
     applySearch(searchTerm);
   };
 
+  const displayName = user?.username || user?.email || 'Trainer';
+
   return (
-    <div>
-      <NavigationBar activePage="home" />
-
-      {/* Component content */}
-      <div className="container mt-4">
-        <div className="text-center mt-5">
-          <h1>Welcome {user?.username || user?.email || 'User'}!</h1>
-          <p>You are successfully logged in.</p>
-        </div>
-
-        <section className="mt-5">
-          <header className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-3">
-            <div>
-              <h2 className="h4 mb-1">Search the Pokédex</h2>
-              <p className="text-muted mb-0">Find a card and add it to your favourites from here.</p>
-            </div>
+    <PageLayout
+      activePage="home"
+      title={`Welcome ${displayName}!`}
+      description="Search the Pokédex to discover new cards and grow your collection."
+    >
+      <section className="page-surface page-stack">
+        <div className="page-stack page-stack--sm">
+          <header>
+            <h2 className="h4 mb-2 text-uppercase text-secondary">Search the Pokédex</h2>
+            <p className="text-muted mb-0">
+              Find cards you love and add them straight to your favourites or a binder.
+            </p>
           </header>
-
           <form className="card-search-form" onSubmit={handleSearchSubmit}>
             <div className="input-group input-group-lg">
               <input
@@ -120,54 +110,55 @@ function Home() {
               </button>
             </div>
           </form>
-
           {searchError ? (
-            <div className="alert alert-danger mt-3" role="alert">
+            <div className="alert alert-danger mb-0" role="alert">
               {searchError}
             </div>
           ) : null}
+        </div>
 
-          <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mt-1 card-search-results">
-            {cards.map((card) => (
-              <div key={card.id} className="col">
-                <div className="card h-100 shadow-sm">
-                  {card.image ? (
-                    <img src={card.image} className="card-img-top" alt={card.name} loading="lazy" />
-                  ) : null}
-                  <div className="card-body d-flex flex-column gap-2">
-                    <h3 className="h5 mb-0">{card.name}</h3>
-                    <div className="text-muted small">
-                      <div>{card.setName}</div>
-                      <div>{card.rarity}</div>
-                      {card.types.length > 0 ? (
-                        <div>Type: {card.types.join(', ')}</div>
-                      ) : null}
-                    </div>
-                    <FavouriteButton
-                      card={{
-                        title: card.name,
-                        description: `${card.setName} · ${card.rarity}`,
-                        imageUrl: card.image,
-                      }}
-                      className="mt-auto"
-                    >
-                      Add to favourites
-                    </FavouriteButton>
+        <div className="card-grid">
+          {cards.map((card) => (
+            <div key={card.id} className="card">
+              {card.image ? (
+                <img src={card.image} className="card-img-top" alt={card.name} loading="lazy" />
+              ) : null}
+              <div className="card-body">
+                <div>
+                  <h3 className="h5 mb-1">{card.name}</h3>
+                  <div className="text-muted small">
+                    <div>{card.setName}</div>
+                    <div>{card.rarity}</div>
+                    {card.types.length > 0 ? (
+                      <div>Type: {card.types.join(', ')}</div>
+                    ) : null}
                   </div>
                 </div>
+                <FavouriteButton
+                  card={{
+                    title: card.name,
+                    description: `${card.setName} · ${card.rarity}`,
+                    imageUrl: card.image,
+                  }}
+                >
+                  Add to favourites
+                </FavouriteButton>
               </div>
-            ))}
-            {cards.length === 0 && !searching ? (
-              <div className="col">
-                <div className="alert alert-info mt-3" role="alert">
-                  Start by searching for a Pokémon card above.
-                </div>
-              </div>
-            ) : null}
+            </div>
+          ))}
+        </div>
+
+        {cards.length === 0 && !searching ? (
+          <div className="empty-state">
+            <div className="empty-state__icon">🔍</div>
+            <p className="empty-state__title">No cards yet</p>
+            <p className="empty-state__subtitle">
+              Try a different Pokémon name to see matching cards.
+            </p>
           </div>
-        </section>
-      </div>
-    </div>
+        ) : null}
+      </section>
+    </PageLayout>
   );
 }
 

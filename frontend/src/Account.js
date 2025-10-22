@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import NavigationBar from './NavigationBar';
+import PageLayout from './components/PageLayout';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
@@ -190,121 +189,118 @@ function Account() {
   };
 
   return (
-    <div>
-      <NavigationBar activePage="account" />
-
-      {/* Account Settings Content */}
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-8">
-            <h2 className="mb-4">Account Settings</h2>
-
-            {/* Update Details Section */}
-            <div className="card mb-4 shadow">
-              <div className="card-body">
-                <h4 className="card-title mb-3">Update Account Details</h4>
-                <form onSubmit={handleDetailsSubmit}>
-                  <div className="mb-3">
-                    <label htmlFor="username" className="form-label">Username</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      id="username" 
-                      placeholder="Enter username" 
-                      required 
-                      value={detailsForm.username}
-                      onChange={handleDetailsChange}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="email" className="form-label">Email</label>
-                    <input 
-                      type="email" 
-                      className="form-control" 
-                      id="email" 
-                      placeholder="Enter email" 
-                      required 
-                      value={detailsForm.email}
-                      onChange={handleDetailsChange}
-                    />
-                  </div>
-
-                  <button type="submit" className="btn btn-primary">
-                    Update Details
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Change Password Section */}
-            <div className="card shadow">
-              <div className="card-body">
-                <h4 className="card-title mb-3">Change Password</h4>
-                <form onSubmit={handlePasswordSubmit}>
-                  <div className="mb-3">
-                    <label htmlFor="currentPassword" className="form-label">Current Password</label>
-                    <input 
-                      type="password" 
-                      className="form-control" 
-                      id="currentPassword" 
-                      placeholder="Enter current password" 
-                      required 
-                      value={passwordForm.currentPassword}
-                      onChange={handlePasswordChange}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="newPassword" className="form-label">New Password</label>
-                    <input 
-                      type="password" 
-                      className="form-control" 
-                      id="newPassword" 
-                      placeholder="Enter new password" 
-                      required 
-                      value={passwordForm.newPassword}
-                      onChange={handlePasswordChange}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="confirmNewPassword" className="form-label">Confirm New Password</label>
-                    <input 
-                      type="password" 
-                      className="form-control" 
-                      id="confirmNewPassword" 
-                      placeholder="Confirm new password" 
-                      required 
-                      value={passwordForm.confirmNewPassword}
-                      onChange={handlePasswordChange}
-                    />
-                  </div>
-
-                  <button type="submit" className="btn btn-warning">
-                    Change Password
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Delete Account Section */}
-            <div className="card border-danger shadow mt-4">
-              <div className="card-body">
-                <h4 className="card-title text-danger mb-3">Danger Zone</h4>
-                <p className="text-muted">Once you delete your account, there is no going back. Please be certain.</p>
-                <button 
-                  className="btn btn-danger" 
-                  onClick={handleDeleteAccount}
-                >
-                  Delete Account
-                </button>
-              </div>
-            </div>
+    <PageLayout
+      activePage="account"
+      title="Account Settings"
+      description="Update your profile details, keep your password fresh, or leave the platform from one consistent hub."
+    >
+      <div className="page-grid page-grid--two">
+        <section className="page-surface page-stack page-stack--sm">
+          <div>
+            <h2 className="h5 text-uppercase text-secondary mb-2">Profile</h2>
+            <p className="text-muted mb-0">
+              Keep your username and email address up to date so friends can find you.
+            </p>
           </div>
-        </div>
+          <form onSubmit={handleDetailsSubmit} className="page-stack page-stack--sm">
+            <div>
+              <label htmlFor="username" className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                id="username"
+                placeholder="Enter username"
+                required
+                value={detailsForm.username}
+                onChange={handleDetailsChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-control"
+                id="email"
+                placeholder="Enter email"
+                required
+                value={detailsForm.email}
+                onChange={handleDetailsChange}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary">
+              Update details
+            </button>
+          </form>
+        </section>
+
+        <section className="page-surface page-stack page-stack--sm">
+          <div>
+            <h2 className="h5 text-uppercase text-secondary mb-2">Security</h2>
+            <p className="text-muted mb-0">
+              Change your password regularly to keep your collection safe.
+            </p>
+          </div>
+          <form onSubmit={handlePasswordSubmit} className="page-stack page-stack--sm">
+            <div>
+              <label htmlFor="currentPassword" className="form-label">Current password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="currentPassword"
+                placeholder="Enter current password"
+                required
+                value={passwordForm.currentPassword}
+                onChange={handlePasswordChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="newPassword" className="form-label">New password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="newPassword"
+                placeholder="Enter new password"
+                required
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirmNewPassword" className="form-label">Confirm new password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="confirmNewPassword"
+                placeholder="Confirm new password"
+                required
+                value={passwordForm.confirmNewPassword}
+                onChange={handlePasswordChange}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-outline-secondary">
+              Change password
+            </button>
+          </form>
+        </section>
       </div>
-    </div>
+
+      <section className="page-surface page-surface--muted page-stack page-stack--sm">
+        <div>
+          <h2 className="h5 text-uppercase text-danger mb-2">Danger zone</h2>
+          <p className="text-muted mb-0">
+            Once you delete your account there is no going back. All data will be removed permanently.
+          </p>
+        </div>
+        <button className="btn btn-danger align-self-start" onClick={handleDeleteAccount}>
+          Delete account
+        </button>
+      </section>
+    </PageLayout>
   );
 }
 

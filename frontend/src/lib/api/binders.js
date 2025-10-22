@@ -1,8 +1,4 @@
-const RAW_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
-const NORMALISED_BASE = RAW_BASE.replace(/\/$/, '');
-const API_BASE = NORMALISED_BASE.endsWith('/api')
-  ? NORMALISED_BASE
-  : `${NORMALISED_BASE}/api`;
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001/api';
 
 function getAccountId() {
   if (typeof window === 'undefined') return '1';
@@ -75,4 +71,29 @@ export function updateCardQty(binderId, cardId, quantity) {
 
 export function deleteCard(binderId, cardId) {
   return request(`/binders/${binderId}/cards/${cardId}`, { method: 'DELETE' });
+}
+
+export function deleteBinderCardsBulk(binderId, items) {
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.debug('[bindersApi] bulk delete request', { binderId, items });
+  }
+
+  return request(`/binders/${binderId}/cards/bulk`, {
+    method: 'DELETE',
+    body: {
+      items: items
+        .map((entry) => {
+          if (!entry) return null;
+          const cardId = entry.cardId ?? entry.id ?? entry.card_id;
+          if (!cardId) return null;
+          const payload = { cardId };
+          if (entry.finish) {
+            payload.finish = entry.finish;
+          }
+          return payload;
+        })
+        .filter(Boolean),
+    },
+  });
 }

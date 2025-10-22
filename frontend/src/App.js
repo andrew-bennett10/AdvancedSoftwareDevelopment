@@ -13,6 +13,7 @@ import EditBinder from './editBinder';
 import ViewBinder from './viewBinder';
 import ViewBinderPage from './pages/ViewBinderPage';
 import AddToBinderPage from './pages/AddToBinderPage';
+import AchievementNotification from './AchievementNotification';
 
 function App() {
   return (

@@ -1,8 +1,4 @@
-const RAW_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
-const NORMALISED_BASE = RAW_BASE.replace(/\/$/, '');
-const API_BASE = NORMALISED_BASE.endsWith('/api')
-  ? NORMALISED_BASE
-  : `${NORMALISED_BASE}/api`;
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001/api';
 
 async function request(path, options = {}) {
   const headers = { ...(options.headers || {}) };

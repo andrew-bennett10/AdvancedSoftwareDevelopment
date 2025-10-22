@@ -298,6 +298,7 @@ app.post('/binders', async (req, res) => {
   }
 });
 
+// get a list of binders
 app.get('/binders', async (_req, res) => {
   try {
     const { rows } = await db.query('SELECT id, name, type_of_card FROM binders ORDER BY id');
@@ -313,6 +314,7 @@ app.get('/binders', async (_req, res) => {
   }
 });
 
+// get a specific binder by id
 app.get('/binders/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!id) {
@@ -335,6 +337,7 @@ app.get('/binders/:id', async (req, res) => {
   }
 });
 
+// edit the name and type of card of a binder 
 app.post('/edit-binder', async (req, res) => {
   const { id, name, typeOfCard } = req.body || {};
   if (!id) {
@@ -357,6 +360,24 @@ app.post('/edit-binder', async (req, res) => {
   } catch (err) {
     console.error('Error updating binder:', err);
     res.status(400).send({ error: 'Failed to update binder' });
+  }
+});
+
+// Delete binder by id
+app.delete('/binders/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || !Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid binder id' });
+  }
+  try {
+    const { rows } = await db.query('DELETE FROM binders WHERE id = $1 RETURNING id', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Binder not found' });
+    }
+    res.json({ message: 'Successfully released binder (deleted successfully)' });
+  } catch (err) {
+    console.error('Error deleting binder:', err);
+    res.status(500).json({ error: 'The binder did not want to be released (failed to delete)' });
   }
 });
 

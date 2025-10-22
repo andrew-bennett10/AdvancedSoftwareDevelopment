@@ -58,6 +58,28 @@ function Binders() {
     fetchBinders();
   }, [user]);
 
+  const handleDeleteBinder = async (id) => {
+    if (!id) return;
+    const confirmed = typeof window !== 'undefined' && typeof window.confirm === 'function'
+      ? window.confirm('Delete this binder? This cannot be undone.')
+      : false;
+    if (!confirmed) return;
+    try {
+      const origin = API_BASE.replace(/\/api\/?$/, '');
+      const res = await fetch(`${origin}/binders/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || `Delete failed (${res.status})`);
+      }
+      // remove from state so UI updates immediately
+      setBinders((prev) => prev.filter((b) => b.id !== id));
+    } catch (err) {
+      console.error('Failed to delete binder:', err);
+      setError(err.message || 'Failed to delete binder.');
+      alert(err.message || 'Failed to delete binder');
+    }
+  };
+
   return (
     <div>
       <NavigationBar activePage="binders" />
@@ -96,6 +118,12 @@ function Binders() {
                             onClick={() => navigate('/edit-binder', { state: { id: b.id } })}
                           >
                             Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-danger px-3"
+                            onClick={() => handleDeleteBinder(b.id)}
+                          >
+                            Delete
                           </button>
                         </div>
                       </div>

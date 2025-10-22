@@ -16,6 +16,10 @@ function EditBinder() {
   });
   const [binderId, setBinderId] = useState(null);
 
+  const ALLOWED_TYPES = ['pokemon', 'item', 'trainer', 'energy', 'supporter', 'stadium'];
+  const normalizeType = (s) => (s || '').toString().trim().toLowerCase();
+  const isAllowedType = (s) => ALLOWED_TYPES.includes(normalizeType(s));
+
   // Check if user is logged in on component mount
   useEffect(() => {
     const userData = localStorage.getItem('userData');
@@ -70,6 +74,11 @@ function EditBinder() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!isAllowedType(formData.typeOfCard)) {
+      alert(`Type of Card must be one of: ${ALLOWED_TYPES.join(', ')}`);
+      return;
+    }
+
     //edit a binder
     try {
       const res = await fetch(`${API_BASE}/edit-binder`, {
@@ -119,6 +128,7 @@ function EditBinder() {
                   <label htmlFor="name" className="form-label">New Name</label>
                   <input 
                     type="text" 
+                    pattern="[A-Za-z]+"
                     className="form-control" 
                     id="name" 
                     placeholder="Enter name" 
@@ -131,7 +141,8 @@ function EditBinder() {
                 <div className="mb-3">
                   <label htmlFor="typeOfCard" className="form-label">New Type of Card</label>
                   <input 
-                    type="text" 
+                     type="text"
+                     list="type-options"
                     className="form-control" 
                     id="typeOfCard" 
                     placeholder="Enter card type (eg pokemon, item, energy etc)" 
@@ -139,6 +150,11 @@ function EditBinder() {
                     value={formData.typeOfCard}
                     onChange={handleChange}
                   />
+                  <datalist id="type-options">
+                    {ALLOWED_TYPES.map((t) => (
+                      <option key={t} value={t} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <button type="submit" className="btn btn-primary w-100">

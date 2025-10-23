@@ -50,3 +50,41 @@ steps:
     cd frontend
     CI=true npm test -- --coverage --watchAll=false
   displayName: 'Run frontend unit tests'
+
+# Archive backend files for deployment
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+    replaceExistingArchive: true
+  displayName: 'Archive backend files'
+
+# Publish backend artifact
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+    ArtifactName: 'backend'
+    publishLocation: 'Container'
+  displayName: 'Publish backend artifact'
+
+# Deploy Backend to Azure App Service
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'YOUR_SERVICE_CONNECTION_NAME'  # TODO: Replace with your service connection name
+    appType: 'webAppLinux'
+    appName: 'YOUR_BACKEND_APP_NAME'  # TODO: Replace with your actual backend app service name
+    package: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+    runtimeStack: 'NODE|20-lts'
+    startUpCommand: 'npm install && node server.js'
+  displayName: 'Deploy backend to Azure App Service'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+
+# Publish frontend build artifact
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/frontend/build'
+    ArtifactName: 'frontend'
+    publishLocation: 'Container'
+  displayName: 'Publish frontend build artifact'

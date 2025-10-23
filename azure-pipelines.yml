@@ -85,9 +85,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: ubuntu-20.04
-    environment: dev                      # optional DevOps Environment name
     variables:
-    - group: Release                      # should contain BackendAppName, FrontendAppName, DatabaseUrl, etc.
     strategy:
       runOnce:
         deploy:
@@ -99,18 +97,14 @@ stages:
             displayName: Deploy backend App Service
             inputs:
               azureSubscription: 'Resource Manager'
-              appType: webAppLinux
+              appType: webApp
               appName: $(BackendAppName)
               package: '$(Pipeline.Workspace)/drop/backend.zip'
-              runtimeStack: 'NODE|20-lts'
-              appSettings: |
-                -DATABASE_URL $(DatabaseUrl)
-                -PORT 8080
 
           - task: AzureWebApp@1
             displayName: Deploy frontend App Service
             inputs:
               azureSubscription: 'Resource Manager connection name'
-              appType: webAppLinux
+              appType: webApp
               appName: $(FrontendAppName)
               package: '$(Pipeline.Workspace)/drop/frontend.zip'

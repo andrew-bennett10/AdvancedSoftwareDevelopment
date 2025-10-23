@@ -11,6 +11,7 @@ import {
   updateCardQty,
 } from "../lib/api/binders";
 import { searchCards } from "../lib/api/cards";
+import PageLayout from "../components/PageLayout";
 import "./BinderPage.css";
 
 const PAGE_SIZE = 20;
@@ -271,76 +272,57 @@ export default function AddToBinderPage() {
     );
   };
 
-  const navTabs = useMemo(
-    () => [
-      { label: "Home", path: "/" },
-      { label: "Favourites", path: "/favourites" },
-      { label: "Account", path: "/account" },
-      { label: "Binders", path: "/binders" },
-    ],
-    []
-  );
-
   const totalStaged = stagedEntries.reduce((total, [, entry]) => total + entry.qty, 0);
+  const pageTitle = "Add Cards";
+  const pageDescription = binderId
+    ? `Search the catalog and add cards to binder #${binderId}.`
+    : "Select a binder to continue.";
+  const headerActions = (
+    <div className="binder-header-actions">
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={() => (binderId ? navigate(`/binder/${binderId}`) : navigate("/binders"))}
+      >
+        {binderId ? "Back to Binder" : "Back to Binders"}
+      </button>
+      <button
+        type="button"
+        className="btn btn-blue"
+        onClick={() => binderId && navigate(`/binder/${binderId}`)}
+        disabled={!binderId}
+      >
+        View Binder
+      </button>
+    </div>
+  );
+  const stageSubtitle = searchLoading
+    ? "Searching cards…"
+    : binderId
+      ? `Found ${searchTotal} card${searchTotal === 1 ? "" : "s"} to explore.`
+      : "No binder selected yet.";
 
   return (
-    <div className="binder-desktop">
-      <div className="binder-window">
-        <header className="binder-window__header">
-          <div className="binder-window__controls">
-            <span className="window-dot window-dot--close" />
-            <span className="window-dot window-dot--min" />
-            <span className="window-dot window-dot--max" />
-          </div>
-          <nav className="binder-window__tabs">
-            {navTabs.map((tab) => (
-              <button
-                key={tab.label}
-                type="button"
-                className={`binder-tab ${
-                  tab.label === "Binders" ? "binder-tab--active" : ""
-                }`}
-                onClick={() => navigate(tab.path)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-          <div className="binder-window__status" />
-        </header>
+    <PageLayout
+      activePage="binders"
+      title={pageTitle}
+      description={pageDescription}
+      actions={headerActions}
+      maxWidth="full"
+    >
+      <div className="binder-page">
+        <div className="binder-shell">
+          <div className="binder-main-grid">
+            <section className="binder-stage">
+              <header className="binder-stage__header">
+                <div>
+                  <h2 className="binder-stage__title">Catalog</h2>
+                  <p className="binder-stage__subtitle">{stageSubtitle}</p>
+                </div>
+              </header>
 
-        <div className="binder-window__body">
-          <section className="binder-stage">
-            <header className="binder-stage__header">
-              <div>
-                <h1 className="binder-stage__title">Add Cards</h1>
-                <p className="binder-stage__subtitle">
-                  {binderId ? `Binder #${binderId}` : "Select a binder to continue"}
-                </p>
-              </div>
-              <div className="binder-stage__actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() =>
-                    binderId ? navigate(`/binder/${binderId}`) : navigate("/binders")
-                  }
-                >
-                  Back to Binder
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-blue"
-                  onClick={() => binderId && navigate(`/binder/${binderId}`)}
-                  disabled={!binderId}
-                >
-                  View Binder
-                </button>
-              </div>
-            </header>
-
-            <div className="binder-stage__canvas">
-              <div className="binder-canvas-panel">
+              <div className="binder-stage__canvas">
+                <div className="binder-canvas-panel">
                 {accountError && (
                   <p className="binder-alert" role="alert">
                     {accountError}
@@ -554,5 +536,6 @@ export default function AddToBinderPage() {
         </div>
       )}
     </div>
+    </PageLayout>
   );
 }

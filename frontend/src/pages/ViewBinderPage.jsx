@@ -8,6 +8,7 @@ import CardModal from "../components/CardModal";
 import ConfirmationModal from "../components/ConfirmationModal";
 import SelectableCardTile from "../components/SelectableCardTile";
 import BulkActionBar from "../components/BulkActionBar";
+import PageLayout from "../components/PageLayout";
 import {
   getBinderCards,
   getBinderCard,
@@ -420,101 +421,85 @@ export default function ViewBinderPage() {
 
   const previewCard = selectedCard;
 
-  const navTabs = useMemo(
-    () => [
-      { label: "Home", path: "/" },
-      { label: "Favourites", path: "/favourites" },
-      { label: "Account", path: "/account" },
-      { label: "Binders", path: "/binders" },
-    ],
-    []
+  const hasBinder = Boolean(binderId);
+  const pageTitle = binderInfo?.title || "Binder";
+  const pageDescription = binderInfo?.format
+    ? `Format: ${binderInfo.format}`
+    : "Explore your collected cards";
+  const cardSubtitle = cardsLoading
+    ? "Loading cards…"
+    : binderCards.length
+      ? `${binderCards.length} ${binderCards.length === 1 ? "card" : "cards"} in this binder`
+      : "No cards in this binder yet.";
+  const headerActions = (
+    <div className="binder-header-actions">
+      {binderInfoLoading && <span className="binder-header-loading">Loading info…</span>}
+      <button
+        className="btn btn-blue"
+        onClick={() =>
+          hasBinder ? navigate(`/binder/${binderId}/add`) : navigate("/binders")
+        }
+        disabled={!hasBinder}
+      >
+        Add Cards
+      </button>
+      <button
+        type="button"
+        className={`btn ${editMode ? "btn-blue" : "btn-secondary"}`}
+        onClick={toggleEditMode}
+        aria-pressed={editMode}
+        disabled={bulkRemoving}
+      >
+        {editMode ? "Done" : "Edit"}
+      </button>
+    </div>
   );
 
-  const hasBinder = Boolean(binderId);
-
   return (
-    <div className="binder-desktop">
-      <div className="binder-window">
-        <header className="binder-window__header">
-          <div className="binder-window__controls">
-            <span className="window-dot window-dot--close" />
-            <span className="window-dot window-dot--min" />
-            <span className="window-dot window-dot--max" />
-          </div>
-          <nav className="binder-window__tabs">
-            {navTabs.map((tab) => (
-              <button
-                key={tab.label}
-                type="button"
-                className={`binder-tab ${
-                  tab.label === "Binders" ? "binder-tab--active" : ""
-                }`}
-                onClick={() => navigate(tab.path)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-          <div className="binder-window__status" />
-        </header>
-
-        <div className="binder-window__body">
-          <section className="binder-stage">
-            <header className="binder-stage__header">
-              <div>
-                <h1 className="binder-stage__title">
-                  {binderInfo?.title || "Binder"}
-                </h1>
-                <p className="binder-stage__subtitle">
-                  {binderInfo?.format
-                    ? `Format: ${binderInfo.format}`
-                    : "Explore your collected cards"}
-                </p>
-              </div>
-              <div className="binder-stage__actions">
-                {binderInfoLoading && (
-                  <span className="binder-stage__loading">Loading info…</span>
+    <PageLayout
+      activePage="binders"
+      title={pageTitle}
+      description={pageDescription}
+      actions={headerActions}
+      maxWidth="full"
+    >
+      <div className="binder-page">
+        <div className="binder-shell">
+          <div className="binder-main-grid">
+            <section className="binder-stage">
+              <header className="binder-stage__header">
+                <div>
+                  <h2 className="binder-stage__title">Binder Cards</h2>
+                  <p className="binder-stage__subtitle">{cardSubtitle}</p>
+                </div>
+                {(cardsLoading || editMode) && (
+                  <div className="binder-stage__actions">
+                    {cardsLoading && (
+                      <span className="binder-stage__loading">Loading cards…</span>
+                    )}
+                    {editMode && (
+                      <label className="binder-header-selectAll">
+                        <input
+                          ref={selectAllRef}
+                          type="checkbox"
+                          checked={allSelected}
+                          disabled={
+                            bulkRemoving || cardsLoading || binderCards.length === 0
+                          }
+                          onChange={(event) =>
+                            handleToggleSelectAll(event.target.checked)
+                          }
+                          aria-label="Select all visible cards"
+                        />
+                        <span>Select all</span>
+                      </label>
+                    )}
+                  </div>
                 )}
-                <button
-                  className="btn btn-blue"
-                  onClick={() =>
-                    hasBinder ? navigate(`/binder/${binderId}/add`) : navigate("/binders")
-                  }
-                  disabled={!hasBinder}
-                >
-                  Add Cards
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${editMode ? "btn-blue" : "btn-secondary"}`}
-                  onClick={toggleEditMode}
-                  aria-pressed={editMode}
-                  disabled={bulkRemoving}
-                >
-                  {editMode ? "Done" : "Edit"}
-                </button>
-                {editMode && (
-                  <label className="binder-header-selectAll">
-                    <input
-                      ref={selectAllRef}
-                      type="checkbox"
-                      checked={allSelected}
-                      disabled={
-                        bulkRemoving || cardsLoading || binderCards.length === 0
-                      }
-                      onChange={(event) =>
-                        handleToggleSelectAll(event.target.checked)
-                      }
-                      aria-label="Select all visible cards"
-                    />
-                    <span>Select all</span>
-                  </label>
-                )}
-              </div>
-            </header>
+              </header>
 
-            <div className="binder-stage__canvas">
-              <div className="binder-canvas-panel">
+              <div className="binder-stage__canvas">
+                <div className="binder-canvas-panel">
                 {accountError && (
                   <p className="binder-alert" role="alert">
                     {accountError}
@@ -672,40 +657,40 @@ export default function ViewBinderPage() {
           </aside>
         </div>
       </div>
+        {selectedCard && (
+          <CardModal
+            card={{
+              ...selectedCard,
+              imageUrl: selectedCard.imageUrl || selectedCard.image_url,
+            }}
+            onClose={() => setSelectedCard(null)}
+            onRemove={handleRemoveCard}
+            removeDisabled={removingCurrentCard}
+            removeLabel={removingCurrentCard ? "Removing…" : "Remove from Binder"}
+          />
+        )}
 
-      {selectedCard && (
-        <CardModal
-          card={{
-            ...selectedCard,
-            imageUrl: selectedCard.imageUrl || selectedCard.image_url,
-          }}
-          onClose={() => setSelectedCard(null)}
-          onRemove={handleRemoveCard}
-          removeDisabled={removingCurrentCard}
-          removeLabel={removingCurrentCard ? "Removing…" : "Remove from Binder"}
+        <ConfirmationModal
+          isOpen={confirmBulkOpen}
+          title="Remove Selected Cards"
+          message={`Remove ${selectedCount} card${selectedCount === 1 ? "" : "s"} from this binder?`}
+          confirmLabel="Remove"
+          cancelLabel="Keep Cards"
+          onConfirm={handleBulkRemoveConfirm}
+          onCancel={closeBulkModal}
+          busy={bulkRemoving}
         />
-      )}
 
-      <ConfirmationModal
-        isOpen={confirmBulkOpen}
-        title="Remove Selected Cards"
-        message={`Remove ${selectedCount} card${selectedCount === 1 ? "" : "s"} from this binder?`}
-        confirmLabel="Remove"
-        cancelLabel="Keep Cards"
-        onConfirm={handleBulkRemoveConfirm}
-        onCancel={closeBulkModal}
-        busy={bulkRemoving}
-      />
-
-      {toast && (
-        <div
-          className={`binder-toast binder-toast--${toast.type}`}
-          role="status"
-          aria-live="polite"
-        >
-          {toast.message}
-        </div>
-      )}
-    </div>
+        {toast && (
+          <div
+            className={`binder-toast binder-toast--${toast.type}`}
+            role="status"
+            aria-live="polite"
+          >
+            {toast.message}
+          </div>
+        )}
+      </div>
+    </PageLayout>
   );
 }

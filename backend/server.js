@@ -89,12 +89,25 @@ async function handleCreateBinder(req, res) {
   }
 }
 
-app.get('/health', (_req, res) => {
-  res.json({ ok: true });
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.json({ 
+    message: 'PokeBinder API is running!',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      signup: '/signup',
+      login: '/login',
+      favourites: '/api/favourites',
+      achievements: '/api/achievements',
+      binders: '/api/binders',
+      cards: '/api/cards'
+    }
+  });
 });
 
 app.get('/health', (_req, res) => {
-  res.send({ ok: true });
+  res.json({ ok: true, status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // Sign Up endpoint

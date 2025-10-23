@@ -85,7 +85,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: ubuntu-20.04
-    environment: dev                      # optional DevOps Environment name
+    environment: ASD                      # optional DevOps Environment name
     variables:
     - group: Release                      # should contain BackendAppName, FrontendAppName, DatabaseUrl, etc.
     strategy:
@@ -110,7 +110,7 @@ stages:
           - task: AzureWebApp@1
             displayName: Deploy frontend App Service
             inputs:
-              azureSubscription: 'Resource Manager connection name'
+              azureSubscription: 'Resource Manager'
               appType: webAppLinux
               appName: $(FrontendAppName)
               package: '$(Pipeline.Workspace)/drop/frontend.zip'

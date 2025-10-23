@@ -5,7 +5,19 @@ const binderRoutes = require('./routes/binders');
 const cardRoutes = require('./routes/cards');
 
 const app = express();
-app.use(cors());
+
+// Configure CORS to allow your frontend
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://polite-mud-066333700.3.azurestaticapps.net'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api/binders', binderRoutes);
 app.use('/api/cards', cardRoutes);

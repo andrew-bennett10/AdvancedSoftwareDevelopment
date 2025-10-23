@@ -85,7 +85,6 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: ubuntu-20.04
-    environment: ASD                      # optional DevOps Environment name
     variables:
     - group: Release                      # should contain BackendAppName, FrontendAppName, DatabaseUrl, etc.
     strategy:

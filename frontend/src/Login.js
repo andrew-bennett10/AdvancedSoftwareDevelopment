@@ -82,10 +82,6 @@ function Login() {
           <p className="text-center mb-1">
             Don’t have an account? <Link to="/signup">Sign Up</Link>
           </p>
-          <p className="text-center">
-            <Link to="/favourites">Browse favourites</Link>
-          </p>
-
           <button type="submit" className="btn btn-primary w-100">
             Login
           </button>

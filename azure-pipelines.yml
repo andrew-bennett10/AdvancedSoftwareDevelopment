@@ -72,9 +72,9 @@ steps:
 # Deploy Backend to Azure App Service
 - task: AzureWebApp@1
   inputs:
-    azureSubscription: 'YOUR_SERVICE_CONNECTION_NAME'  # TODO: Replace with your service connection name
+    azureSubscription: 'andrew-bennett10'  # TODO: Replace with your service connection name
     appType: 'webAppLinux'
-    appName: 'YOUR_BACKEND_APP_NAME'  # TODO: Replace with your actual backend app service name
+    appName: 'PokeApp'  # TODO: Replace with your actual backend app service name
     package: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
     runtimeStack: 'NODE|20-lts'
     startUpCommand: 'npm install && node server.js'

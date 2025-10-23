@@ -1,90 +1,116 @@
-# Node.js with React
-# Build a Node.js project that uses React.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
 - main
 
-pool:
-  vmImage: ubuntu-latest
+stages:
+# ────────────────────────────────────────
+# Build: compile, seed DB, test, publish artifacts
+# ────────────────────────────────────────
+- stage: Build
+  displayName: Build the web application
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
 
-services:
-  postgres:
-    image: postgres:13
-    env:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    ports:
-      - 5432:5432
-    options: >-
-      --health-cmd="pg_isready -U postgres -d postgres"
-      --health-interval=10s
-      --health-timeout=5s
-      --health-retries=5
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'   # use the Node.js version you need
-  displayName: 'Install Node.js'
+    steps:
+    - task: NodeTool@0
+      displayName: Install Node.js 20.x
+      inputs:
+        versionSpec: '20.x'
 
-- script: |
-    cd frontend
-    npm install
-    npm run build
-  displayName: 'Install dependencies and build'
+    - script: |
+        cd frontend
+        npm install
+        npm run build
+      displayName: Build frontend
 
-# Initialise database schema (runs dbInit.js)
-- script: |
-    cd backend
-    npm install
-    node dbInit.js
-  displayName: 'Initialize database schema'
-  env:
-    DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+    - script: |
+        cd backend
+        npm install
+        node dbInit.js
+      displayName: Initialize database schema
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
-# Run unit tests
-- script: |
-    cd frontend
-    CI=true npm test -- --coverage --watchAll=false
-  displayName: 'Run frontend unit tests'
+    - script: |
+        cd frontend
+        CI=true npm test -- --watchAll=false
+      displayName: Run frontend unit tests
 
-# Archive backend files for deployment
-- task: ArchiveFiles@2
-  inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
-    replaceExistingArchive: true
-  displayName: 'Archive backend files'
+    # Package backend (Node/Express) for deployment
+    - task: ArchiveFiles@2
+      displayName: Zip backend artefact
+      inputs:
+        rootFolderOrFile: backend
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
 
-# Publish backend artifact
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
-    ArtifactName: 'backend'
-    publishLocation: 'Container'
-  displayName: 'Publish backend artifact'
+    # Package frontend build output for deployment
+    - task: ArchiveFiles@2
+      displayName: Zip frontend artefact
+      inputs:
+        rootFolderOrFile: frontend/build
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
 
-# Deploy Backend to Azure App Service
-- task: AzureWebApp@1
-  inputs:
-    azureSubscription: 'Resource Manager'  # TODO: Replace with your service connection name
-    appType: 'webAppLinux'
-    appName: 'PokeApp'  # TODO: Replace with your actual backend app service name
-    package: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
-    runtimeStack: 'NODE|20-lts'
-    startUpCommand: 'npm install && node server.js'
-  displayName: 'Deploy backend to Azure App Service'
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    - task: PublishBuildArtifacts@1
+      displayName: Publish artefacts
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: drop
 
-# Publish frontend build artifact
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(System.DefaultWorkingDirectory)/frontend/build'
-    ArtifactName: 'frontend'
-    publishLocation: 'Container'
-  displayName: 'Publish frontend build artifact'
+# ────────────────────────────────────────
+# Deploy: push frontend + backend App Services
+# ────────────────────────────────────────
+- stage: Deploy
+  displayName: Deploy the web application
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    pool:
+      vmImage: ubuntu-20.04
+    environment: dev                      # optional DevOps Environment name
+    variables:
+    - group: Release                      # should contain BackendAppName, FrontendAppName, DatabaseUrl, etc.
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop                # brings down backend.zip & frontend.zip
+
+          - task: AzureWebApp@1
+            displayName: Deploy backend App Service
+            inputs:
+              azureSubscription: 'Resource Manager'
+              appType: webAppLinux
+              appName: $(BackendAppName)
+              package: '$(Pipeline.Workspace)/drop/backend.zip'
+              runtimeStack: 'NODE|20-lts'
+              appSettings: |
+                -DATABASE_URL $(DatabaseUrl)
+                -PORT 8080
+
+          - task: AzureWebApp@1
+            displayName: Deploy frontend App Service
+            inputs:
+              azureSubscription: 'Resource Manager connection name'
+              appType: webAppLinux
+              appName: $(FrontendAppName)
+              package: '$(Pipeline.Workspace)/drop/frontend.zip'

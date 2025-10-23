@@ -1,0 +1,85 @@
+.selectable-card {
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+.selectable-card--editing {
+  cursor: pointer;
+}
+
+.selectable-card--editing .card-frame {
+  cursor: pointer;
+}
+
+.selectable-card--selected .card-frame {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.6);
+  border-color: rgba(248, 113, 113, 0.9);
+}
+
+.selectable-card--selected .card-frame::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 10px;
+  border: 2px solid rgba(239, 68, 68, 0.35);
+  pointer-events: none;
+}
+
+.selectable-card--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selectable-card__checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid rgba(233, 237, 244, 0.7);
+  background: rgba(15, 21, 34, 0.75);
+  color: #e9edf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.selectable-card__checkbox:hover {
+  border-color: #3b82f6;
+}
+
+.selectable-card__checkbox--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selectable-card__checkbox--disabled:hover {
+  border-color: rgba(233, 237, 244, 0.7);
+}
+
+.selectable-card__checkbox input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.selectable-card__checkbox-inner {
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.selectable-card__checkbox input:focus-visible + .selectable-card__checkbox-inner {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.selectable-card__checkbox input:disabled + .selectable-card__checkbox-inner {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -11,6 +11,7 @@ const requiredExports = [
   'addOrIncrement',
   'setQuantity',
   'removeCard',
+  'removeCardsBulk',
 ];
 
 for (const name of requiredExports) {
@@ -51,6 +52,46 @@ function parseCardId(req) {
     throw err;
   }
   return id;
+}
+
+function parseBulkItems(req) {
+  const body = req.body || {};
+  const items = Array.isArray(body.items)
+    ? body.items
+    : Array.isArray(body.cardIds)
+      ? body.cardIds.map((cardId) => ({ cardId }))
+      : null;
+
+  if (!items || items.length === 0) {
+    const err = new Error('Request must include at least one card to remove.');
+    err.status = 400;
+    throw err;
+  }
+
+  const normalized = [];
+  const seen = new Set();
+
+  for (const raw of items) {
+    if (!raw || raw.cardId == null) continue;
+    const cardId = String(raw.cardId).trim();
+    if (!cardId) continue;
+
+    const finishRaw = raw.finish == null ? '' : String(raw.finish).trim();
+    const finish = finishRaw || undefined;
+    const key = `${cardId}::${finish || ''}`;
+
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(finish ? { cardId, finish } : { cardId });
+  }
+
+  if (normalized.length === 0) {
+    const err = new Error('Request must include cardIds to remove.');
+    err.status = 400;
+    throw err;
+  }
+
+  return normalized;
 }
 
 // GET /api/binders/:binderId/cards  -> list binder cards with quantities + details
@@ -134,6 +175,37 @@ router.delete(
     await binderService.removeCard(binderId, cardId);
 
     res.json({ ok: true, data: { deleted: true, cardId } });
+  })
+);
+
+// DELETE /api/binders/:binderId/cards/bulk -> remove many cards
+router.delete(
+  '/:binderId/cards/bulk',
+  asyncHandler(async (req, res) => {
+    const accountId = getAccountId(req);
+    const binderId = parseBinderId(req);
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[bindersRoute] bulk delete request', {
+        binderId,
+        accountId,
+        rawBody: req.body,
+      });
+    }
+    const items = parseBulkItems(req);
+
+    await binderService.assertBinderOwnership(binderId, accountId);
+    const result = await binderService.removeCardsBulk(binderId, items);
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[bindersRoute] bulk delete response', {
+        binderId,
+        accountId,
+        items,
+        result,
+      });
+    }
+
+    res.json({ ok: true, data: { ...result, items } });
   })
 );
 

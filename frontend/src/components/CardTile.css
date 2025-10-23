@@ -1,50 +1,55 @@
-
-/* One tile wrapper */
 .card-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;             
+  gap: 16px;
+  width: 100%;
 }
 
-/* Card frame */
 .card-frame {
-  background: #101827;              
-  border-radius: 12px;
-  border: 3px solid transparent;   
-  padding: 6px;
-  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 63 / 90;
+  min-height: 500px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 4px solid rgba(255, 255, 255, 0.18);
+  background: rgba(17, 24, 39, 0.72);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
   cursor: pointer;
 }
 
 .card-frame:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  transform: translateY(-4px);
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.45);
 }
 
-/* Blue border when qty > 0 */
 .card-frame--selected {
-  border-color: #3B82F6; /* blue-500 */
+  border-color: rgba(59, 130, 246, 0.7);
+  box-shadow: 0 32px 70px rgba(37, 99, 235, 0.35);
 }
 
-/* Card image */
 .card-img {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 8px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.35);
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  border-radius: 14px;
+  object-fit: cover;
   user-select: none;
   -webkit-user-drag: none;
-  object-fit: contain;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
 }
 
-/* Controls row under the card */
 .tile-actions {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;              /* spacing between - qty + */
+  gap: 18px;
   width: 100%;
 }
 
@@ -52,55 +57,52 @@
   gap: 0;
 }
 
-/* Round +/- buttons */
 .circle-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: none;
-  font-size: 22px;
-  font-weight: bold;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(140deg, rgba(67, 56, 202, 0.6), rgba(147, 197, 253, 0.2));
+  color: #f8fafc;
+  font-size: 20px;
+  font-weight: 600;
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
-  transition: transform .08s ease, filter .08s ease;
-}
-
-.circle-btn:active {
-  transform: scale(0.92);
-}
-
-.circle-btn:hover {
-  filter: brightness(1.05);
-}
-
-.circle-btn.plus {
-  background: #3B82F6; /* blue-500 */
-  color: #ffffff;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
 .circle-btn.minus {
-  background: #2b3346;
-  color: #e9edf4;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.65));
 }
 
-/* Quantity pill */
+.circle-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 22px 40px rgba(15, 23, 42, 0.55);
+}
+
+.circle-btn:active {
+  transform: translateY(1px);
+}
+
 .qty-pill {
-  font-weight: bold;
-  font-size: 16px;
-  background: rgba(0,0,0,0.55);
-  color: #fff;
-  padding: 6px 14px;
+  font-weight: 600;
+  font-size: 15px;
+  background: rgba(15, 23, 42, 0.6);
+  color: #f8fafc;
+  padding: 6px 20px;
   border-radius: 999px;
   line-height: 1;
-  min-width: 30px;
+  min-width: 42px;
   text-align: center;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.35);
 }
 
 .qty-pill.readOnly {
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   font-size: 14px;
-  padding: 6px 16px;
+  padding: 6px 20px;
 }

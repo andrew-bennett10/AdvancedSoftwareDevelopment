@@ -175,6 +175,117 @@ async function removeCard(binderId, cardId) {
   }
 }
 
+let binderCardsHasFinishColumnCache = null;
+
+async function binderCardsHasFinishColumn() {
+  if (binderCardsHasFinishColumnCache !== null) {
+    return binderCardsHasFinishColumnCache;
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT column_name
+         FROM information_schema.columns
+        WHERE table_name = 'binder_cards'
+          AND column_name = 'finish'
+        LIMIT 1`
+    );
+    binderCardsHasFinishColumnCache = result.rowCount > 0;
+  } catch (err) {
+    console.error('Failed to inspect binder_cards.finish column', err);
+    binderCardsHasFinishColumnCache = false;
+  }
+
+  return binderCardsHasFinishColumnCache;
+}
+
+async function removeCardsBulk(binderId, items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw httpError(400, 'items must be a non-empty array');
+  }
+
+  const normalized = [];
+  const seen = new Set();
+
+  for (const raw of items) {
+    if (!raw || raw.cardId == null) continue;
+    const cardId = String(raw.cardId).trim();
+    if (!cardId) continue;
+
+    const finishRaw = raw.finish == null ? '' : String(raw.finish).trim();
+    const finish = finishRaw || undefined;
+    const key = `${cardId}::${finish || ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push({ cardId, finish });
+  }
+
+  if (normalized.length === 0) {
+    throw httpError(400, 'items must include at least one cardId');
+  }
+
+  const hasFinishColumn = await binderCardsHasFinishColumn();
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.info('[binderService] removeCardsBulk begin', {
+      binderId,
+      requested: items,
+      normalized,
+      hasFinishColumn,
+    });
+  }
+
+  return withTransaction(async (client) => {
+    let deleted = 0;
+
+    for (const entry of normalized) {
+      const params = [binderId, entry.cardId];
+      let query = 'DELETE FROM binder_cards WHERE binder_id = $1 AND card_id = $2';
+
+      if (hasFinishColumn) {
+        if (entry.finish) {
+          params.push(entry.finish);
+          query += ' AND finish = $3';
+        } else {
+          query += " AND (finish IS NULL OR finish = '')";
+        }
+      }
+
+      try {
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[binderService] removeCardsBulk executing', {
+            binderId,
+            cardId: entry.cardId,
+            finish: entry.finish,
+            query,
+            params,
+          });
+        }
+        const result = await client.query(query, params);
+        deleted += result.rowCount;
+      } catch (err) {
+        console.error('Failed to remove card from binder (bulk)', {
+          binderId,
+          cardId: entry.cardId,
+          finish: entry.finish,
+          err,
+        });
+        throw err;
+      }
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.info('[binderService] removeCardsBulk commit', {
+        binderId,
+        normalized,
+        deleted,
+      });
+    }
+
+    return { deleted };
+  });
+}
+
 module.exports = {
   assertBinderOwnership,
   addOrIncrement,
@@ -182,4 +293,5 @@ module.exports = {
   listBinderCards,
   getBinderCard,
   removeCard,
+  removeCardsBulk,
 };

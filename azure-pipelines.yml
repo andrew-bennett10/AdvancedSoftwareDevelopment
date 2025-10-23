@@ -72,7 +72,7 @@ steps:
 # Deploy Backend to Azure App Service
 - task: AzureWebApp@1
   inputs:
-    azureSubscription: 'bf3d00f2-acc0-48c9-ad68-160a076f6a55'  # TODO: Replace with your service connection name
+    azureSubscription: 'Resource Manager'  # TODO: Replace with your service connection name
     appType: 'webAppLinux'
     appName: 'PokeApp'  # TODO: Replace with your actual backend app service name
     package: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'

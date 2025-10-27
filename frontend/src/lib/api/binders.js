@@ -50,8 +50,19 @@ async function request(path, options = {}) {
   return payload.data;
 }
 
-export function getBinderCards(binderId) {
-  return request(`/binders/${binderId}/cards`, { method: 'GET' });
+export function getBinderCards(binderId, query = {}) {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    const trimmed = typeof value === 'string' ? value.trim() : value;
+    if (trimmed === '' || trimmed === false) return;
+    params.append(key, trimmed);
+  });
+  const suffix = params.toString();
+  const path = suffix
+    ? `/binders/${binderId}/cards?${suffix}`
+    : `/binders/${binderId}/cards`;
+  return request(path, { method: 'GET' });
 }
 
 export function getBinderCard(binderId, cardId) {

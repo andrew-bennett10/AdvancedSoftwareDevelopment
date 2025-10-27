@@ -1,8 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const binderRoutes = require('./routes/binders');
 const cardRoutes = require('./routes/cards');
+const { attachUser } = require('./middleware/auth');
 
 const app = express();
 
@@ -13,17 +15,20 @@ const corsOptions = {
     'https://polite-mud-066333700.3.azurestaticapps.net'
   ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  // Allow dev auth header used by binder routes.
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-account-id']
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(attachUser);
 app.use('/api/binders', binderRoutes);
 app.use('/api/cards', cardRoutes);
 
-function normalizeBinderPayload(body = {}) {
-  const rawAccountId = body.account_id ?? body.accountId ?? body.userId ?? 1;
+function normalizeBinderPayload(body = {}, user = null) {
+  const rawAccountId =
+    (user && user.id != null ? user.id : null) ?? body.account_id ?? body.accountId ?? body.userId ?? 1;
   const accountId = Number(rawAccountId);
   const rawName = body.name ?? body.title ?? '';
   const rawTitle = body.title ?? body.name ?? 'My Binder';
@@ -43,7 +48,7 @@ function normalizeBinderPayload(body = {}) {
 }
 
 async function handleCreateBinder(req, res) {
-  const { accountId, name, title, format, typeOfCard } = normalizeBinderPayload(req.body);
+  const { accountId, name, title, format, typeOfCard } = normalizeBinderPayload(req.body, req.user);
 
   if (!Number.isInteger(accountId) || accountId <= 0) {
     return res.status(400).json({ error: 'A valid account_id is required.' });
@@ -437,6 +442,21 @@ app.post('/api/achievements', async (req, res) => {
     console.error('Error creating achievement:', err);
     res.status(500).send({ error: 'Failed to create achievement' });
   }
+});
+
+// Generic error handler for JSON APIs
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  const status = err.status || err.code || 500;
+  const safeStatus = Number.isInteger(status) ? status : 500;
+  const message = err.message || 'Internal Server Error';
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('[Error]', err);
+  }
+  if (res.headersSent) {
+    return res.end();
+  }
+  return res.status(safeStatus).json({ ok: false, error: message });
 });
 
 const PORT = process.env.PORT || 3001;

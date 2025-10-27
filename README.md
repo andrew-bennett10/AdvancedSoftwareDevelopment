@@ -15,6 +15,8 @@ Repository: https://github.com/andrew-bennett10/AdvancedSoftwareDevelopment
    ```
    This launches a Docker container named `local-postgres` with the expected `testuser/testpassword` credentials.
 
+   > Encryption support: create a `backend/.env` file with a strong `BINDER_SECRET_KEY` (32+ characters) before starting the API so binder data can be encrypted at rest.
+
 2. **Prepare schema & seed data**
    ```bash
    npm install

@@ -3,6 +3,7 @@ const router = express.Router();
 
 // IMPORTANT: binderService must export functions (not objects) with these names:
 const binderService = require('../services/binderService');
+const { ensureBinderOwner } = require('../middleware/binderAccess');
 
 const requiredExports = [
   'assertBinderOwnership',
@@ -25,23 +26,7 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Minimal “auth” – read account id from header (dev default = 1)
-function getAccountId(req) {
-  const h = req.header('x-account-id');
-  const n = Number(h);
-  return Number.isFinite(n) && n > 0 ? n : 1;
-}
-
-// Validate path param helpers
-function parseBinderId(req) {
-  const n = Number(req.params.binderId);
-  if (!Number.isFinite(n) || n <= 0) {
-    const err = new Error('Invalid binderId');
-    err.status = 400;
-    throw err;
-  }
-  return n;
-}
+router.use('/:binderId', ensureBinderOwner);
 
 function parseCardId(req) {
   // cards.id is VARCHAR; just ensure non-empty
@@ -94,15 +79,38 @@ function parseBulkItems(req) {
   return normalized;
 }
 
+function normalizeCardQuery(query = {}) {
+  const filters = {};
+  if (query.q) {
+    filters.q = String(query.q).trim();
+  } else if (query.search) {
+    filters.q = String(query.search).trim();
+  }
+  if (query.rarity) {
+    filters.rarity = String(query.rarity).trim();
+  }
+  if (query.type) {
+    filters.type = String(query.type).trim();
+  }
+  if (query.set) {
+    filters.set = String(query.set).trim();
+  }
+  if (query.sortBy) {
+    filters.sortBy = String(query.sortBy).trim();
+  }
+  if (query.order) {
+    filters.order = String(query.order).trim();
+  }
+  return filters;
+}
+
 // GET /api/binders/:binderId/cards  -> list binder cards with quantities + details
 router.get(
   '/:binderId/cards',
   asyncHandler(async (req, res) => {
-    const accountId = getAccountId(req);
-    const binderId = parseBinderId(req);
-
-    await binderService.assertBinderOwnership(binderId, accountId);
-    const rows = await binderService.listBinderCards(binderId);
+    const binderId = req.binderId;
+    const filters = normalizeCardQuery(req.query);
+    const rows = await binderService.listBinderCards(binderId, filters);
 
     res.json({ ok: true, data: rows });
   })
@@ -112,11 +120,9 @@ router.get(
 router.get(
   '/:binderId/cards/:cardId',
   asyncHandler(async (req, res) => {
-    const accountId = getAccountId(req);
-    const binderId = parseBinderId(req);
+    const binderId = req.binderId;
     const cardId = parseCardId(req);
 
-    await binderService.assertBinderOwnership(binderId, accountId);
     const row = await binderService.getBinderCard(binderId, cardId);
     if (!row) return res.status(404).json({ error: 'Card not found in binder' });
 
@@ -128,11 +134,9 @@ router.get(
 router.post(
   '/:binderId/cards',
   asyncHandler(async (req, res) => {
-    const accountId = getAccountId(req);
-    const binderId = parseBinderId(req);
+    const binderId = req.binderId;
     const cardId = parseCardId(req);
 
-    await binderService.assertBinderOwnership(binderId, accountId);
     const result = await binderService.addOrIncrement(binderId, cardId);
 
     res.status(201).json({ ok: true, data: result });
@@ -143,8 +147,7 @@ router.post(
 router.patch(
   '/:binderId/cards/:cardId',
   asyncHandler(async (req, res) => {
-    const accountId = getAccountId(req);
-    const binderId = parseBinderId(req);
+    const binderId = req.binderId;
     const cardId = parseCardId(req);
     const quantity = Number(req.body && req.body.quantity);
 
@@ -152,7 +155,6 @@ router.patch(
       return res.status(400).json({ error: 'quantity must be a non-negative integer' });
     }
 
-    await binderService.assertBinderOwnership(binderId, accountId);
     const result = await binderService.setQuantity(binderId, cardId, quantity);
 
     if (!result) {
@@ -167,11 +169,9 @@ router.patch(
 router.delete(
   '/:binderId/cards/:cardId',
   asyncHandler(async (req, res) => {
-    const accountId = getAccountId(req);
-    const binderId = parseBinderId(req);
+    const binderId = req.binderId;
     const cardId = parseCardId(req);
 
-    await binderService.assertBinderOwnership(binderId, accountId);
     await binderService.removeCard(binderId, cardId);
 
     res.json({ ok: true, data: { deleted: true, cardId } });
@@ -182,24 +182,20 @@ router.delete(
 router.delete(
   '/:binderId/cards/bulk',
   asyncHandler(async (req, res) => {
-    const accountId = getAccountId(req);
-    const binderId = parseBinderId(req);
+    const binderId = req.binderId;
     if (process.env.NODE_ENV !== 'production') {
       console.info('[bindersRoute] bulk delete request', {
         binderId,
-        accountId,
         rawBody: req.body,
       });
     }
     const items = parseBulkItems(req);
 
-    await binderService.assertBinderOwnership(binderId, accountId);
     const result = await binderService.removeCardsBulk(binderId, items);
 
     if (process.env.NODE_ENV !== 'production') {
       console.info('[bindersRoute] bulk delete response', {
         binderId,
-        accountId,
         items,
         result,
       });

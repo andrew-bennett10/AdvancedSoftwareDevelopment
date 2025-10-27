@@ -36,6 +36,37 @@ function normalizeCard(row) {
   };
 }
 
+const FILTER_DEBOUNCE_MS = 250;
+const RARITY_OPTIONS = [
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Rare Holo",
+  "Ultra Rare",
+  "Secret Rare",
+];
+const TYPE_OPTIONS = [
+  "Colorless",
+  "Darkness",
+  "Dragon",
+  "Electric",
+  "Fairy",
+  "Fighting",
+  "Fire",
+  "Grass",
+  "Metal",
+  "Psychic",
+  "Water",
+];
+const SORT_OPTIONS = [
+  { value: "recent", label: "Recently Added" },
+  { value: "rarity", label: "Highest Rarity" },
+];
+const ORDER_OPTIONS = [
+  { value: "desc", label: "Descending" },
+  { value: "asc", label: "Ascending" },
+];
+
 export default function ViewBinderPage() {
   const navigate = useNavigate();
   const { binderId: binderParam } = useParams();
@@ -60,6 +91,47 @@ export default function ViewBinderPage() {
   const [bulkRemoving, setBulkRemoving] = useState(false);
   const [toast, setToast] = useState(null);
   const selectAllRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRarity, setSelectedRarity] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedSet, setSelectedSet] = useState("");
+  const [sortBy, setSortBy] = useState("recent");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [availableSets, setAvailableSets] = useState([]);
+  const filtersActive = useMemo(
+    () =>
+      Boolean(
+        searchTerm.trim() ||
+          selectedRarity ||
+          selectedType ||
+          selectedSet ||
+          sortBy !== "recent" ||
+          sortOrder !== "desc"
+      ),
+    [searchTerm, selectedRarity, selectedType, selectedSet, sortBy, sortOrder]
+  );
+  const setOptions = useMemo(() => {
+    const unique = new Set();
+    (availableSets || []).forEach((name) => {
+      if (!name) return;
+      const trimmed = typeof name === "string" ? name.trim() : "";
+      if (trimmed) {
+        unique.add(trimmed);
+      }
+    });
+    if (selectedSet) {
+      unique.add(selectedSet);
+    }
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [availableSets, selectedSet]);
+  const handleResetFilters = useCallback(() => {
+    setSearchTerm("");
+    setSelectedRarity("");
+    setSelectedType("");
+    setSelectedSet("");
+    setSortBy("recent");
+    setSortOrder("desc");
+  }, []);
 
   const buildSelectionMeta = useCallback((card) => {
     if (!card) return { key: null, item: null };
@@ -130,54 +202,107 @@ export default function ViewBinderPage() {
     };
   }, [binderId]);
 
-  const refreshBinderCards = useCallback(async () => {
-    if (!binderId) return;
-    setCardsLoading(true);
-    try {
-      const rows = await getBinderCards(binderId);
-      const mapped = (rows || []).map(normalizeCard).filter(Boolean);
-      mapped.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-
-      const qty = {};
-      const selectionIndex = {};
-      mapped.forEach((card) => {
-        qty[card.card_id] = card.qty;
-        const { key, item } = buildSelectionMeta(card);
-        if (key && item) {
-          selectionIndex[key] = item;
+  const refreshBinderCards = useCallback(
+    async ({ skipLoading = false } = {}) => {
+      if (!binderId) return;
+      if (!skipLoading) {
+        setCardsLoading(true);
+      }
+      try {
+        const trimmedSearch = searchTerm.trim();
+        const query = {
+          sortBy,
+          order: sortOrder,
+        };
+        if (trimmedSearch) {
+          query.q = trimmedSearch;
         }
-      });
+        if (selectedRarity) {
+          query.rarity = selectedRarity.trim();
+        }
+        if (selectedType) {
+          query.type = selectedType.trim();
+        }
+        if (selectedSet) {
+          query.set = selectedSet.trim();
+        }
 
-      setBinderCards(mapped);
-      setQuantities(qty);
-      setSelectedMap((prev) => {
-        if (!editMode) return {};
-        const next = {};
-        Object.entries(prev).forEach(([key, value]) => {
-          if (selectionIndex[key]) {
-            next[key] = value;
+        const rows = await getBinderCards(binderId, query);
+        const mapped = (rows || []).map(normalizeCard).filter(Boolean);
+
+        const qty = {};
+        const selectionIndex = {};
+        mapped.forEach((card) => {
+          qty[card.card_id] = card.qty;
+          const { key, item } = buildSelectionMeta(card);
+          if (key && item) {
+            selectionIndex[key] = item;
           }
         });
-        return next;
-      });
-      setCardsError(null);
-    } catch (err) {
-      console.error("Binder cards load failed", err);
-      setCardsError(err.message || "Failed to load binder contents.");
-      setBinderCards([]);
-      setQuantities({});
-      setSelectedMap({});
-    } finally {
-      setCardsLoading(false);
-    }
-  }, [binderId, buildSelectionMeta, editMode]);
+
+        if (!trimmedSearch && !selectedRarity && !selectedType && !selectedSet) {
+          const sets = Array.from(
+            new Set(
+              mapped
+                .map((card) => card.set_name || card.set || "")
+                .filter(Boolean)
+                .map((name) => name.trim())
+            )
+          ).sort((a, b) => a.localeCompare(b));
+          setAvailableSets(sets);
+        }
+
+        setBinderCards(mapped);
+        setQuantities(qty);
+        setSelectedMap((prev) => {
+          if (!editMode) return {};
+          const next = {};
+          Object.entries(prev).forEach(([key, value]) => {
+            if (selectionIndex[key]) {
+              next[key] = value;
+            }
+          });
+          return next;
+        });
+        setCardsError(null);
+      } catch (err) {
+        console.error("Binder cards load failed", err);
+        setCardsError(err.message || "Failed to load binder contents.");
+        setBinderCards([]);
+        setQuantities({});
+        setSelectedMap({});
+      } finally {
+        if (!skipLoading) {
+          setCardsLoading(false);
+        }
+      }
+    },
+    [
+      binderId,
+      searchTerm,
+      selectedRarity,
+      selectedType,
+      selectedSet,
+      sortBy,
+      sortOrder,
+      buildSelectionMeta,
+      editMode,
+    ]
+  );
 
   useEffect(() => {
-    const maybePromise = refreshBinderCards();
-    if (maybePromise && typeof maybePromise.catch === "function") {
-      maybePromise.catch(() => {});
-    }
-  }, [refreshBinderCards]);
+    if (!binderId) return undefined;
+    const timer = setTimeout(() => {
+      const maybePromise = refreshBinderCards();
+      if (maybePromise && typeof maybePromise.catch === "function") {
+        maybePromise.catch(() => {});
+      }
+    }, FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [
+    binderId,
+    refreshBinderCards,
+  ]);
 
   const handleViewCard = useCallback(
     async (cardId) => {
@@ -204,7 +329,7 @@ export default function ViewBinderPage() {
       try {
         setRemovingCardId(cardId);
         await deleteCard(binderId, cardId);
-        await refreshBinderCards();
+        await refreshBinderCards({ skipLoading: true });
         setSelectedCard(null);
         setCardsError(null);
       } catch (err) {
@@ -326,7 +451,7 @@ export default function ViewBinderPage() {
         }
       }
 
-      await refreshBinderCards();
+      await refreshBinderCards({ skipLoading: true });
       setCardsError(null);
       setConfirmBulkOpen(false);
       clearSelection();
@@ -497,6 +622,101 @@ export default function ViewBinderPage() {
                   </div>
                 )}
               </header>
+
+              <div className="binder-filters">
+                <div className="binder-filters__field binder-filters__field--wide">
+                  <label htmlFor="binder-search">Search</label>
+                  <input
+                    id="binder-search"
+                    type="search"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Search by name, set, or type"
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="binder-filters__field">
+                  <label htmlFor="binder-filter-rarity">Rarity</label>
+                  <select
+                    id="binder-filter-rarity"
+                    value={selectedRarity}
+                    onChange={(event) => setSelectedRarity(event.target.value)}
+                  >
+                    <option value="">All Rarities</option>
+                    {RARITY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="binder-filters__field">
+                  <label htmlFor="binder-filter-type">Type</label>
+                  <select
+                    id="binder-filter-type"
+                    value={selectedType}
+                    onChange={(event) => setSelectedType(event.target.value)}
+                  >
+                    <option value="">All Types</option>
+                    {TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="binder-filters__field">
+                  <label htmlFor="binder-filter-set">Set</label>
+                  <select
+                    id="binder-filter-set"
+                    value={selectedSet}
+                    onChange={(event) => setSelectedSet(event.target.value)}
+                  >
+                    <option value="">All Sets</option>
+                    {setOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="binder-filters__field">
+                  <label htmlFor="binder-sort-by">Sort</label>
+                  <select
+                    id="binder-sort-by"
+                    value={sortBy}
+                    onChange={(event) => setSortBy(event.target.value)}
+                  >
+                    {SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="binder-filters__field">
+                  <label htmlFor="binder-sort-order">Order</label>
+                  <select
+                    id="binder-sort-order"
+                    value={sortOrder}
+                    onChange={(event) => setSortOrder(event.target.value)}
+                  >
+                    {ORDER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary binder-filters__reset"
+                  onClick={handleResetFilters}
+                  disabled={!filtersActive}
+                >
+                  Reset
+                </button>
+              </div>
 
               <div className="binder-stage__canvas">
                 <div className="binder-canvas-panel">

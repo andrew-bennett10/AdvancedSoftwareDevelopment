@@ -77,6 +77,60 @@
   flex-wrap: wrap;
 }
 
+.binder-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.binder-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.binder-filters__field label {
+  color: rgba(242, 244, 255, 0.78);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.binder-filters__field input,
+.binder-filters__field select {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 12, 30, 0.65);
+  color: #f2f4ff;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.binder-filters__field input:focus,
+.binder-filters__field select:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.binder-filters__field--wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 720px) {
+  .binder-filters__field--wide {
+    grid-column: span 1;
+  }
+}
+
+.binder-filters__reset {
+  align-self: end;
+  justify-self: end;
+  padding: 10px 18px;
+}
+
 .binder-stage__loading {
   color: rgba(242, 244, 255, 0.75);
   font-size: 13px;

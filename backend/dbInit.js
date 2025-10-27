@@ -147,6 +147,10 @@ async function initDB() {
   `);
   console.log("Binder_Cards table created");
   await db.query(`
+    ALTER TABLE binder_cards
+    ADD COLUMN IF NOT EXISTS secure_payload TEXT
+  `);
+  await db.query(`
     CREATE TABLE IF NOT EXISTS achievements (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
